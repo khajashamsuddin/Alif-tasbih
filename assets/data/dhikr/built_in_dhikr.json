@@ -1,0 +1,101 @@
+[
+  {
+    "id": "subhanallah",
+    "title": "SubhanAllah",
+    "arabic": "سُبْحَانَ اللَّهِ",
+    "transliteration": "SubhanAllah",
+    "translation": "Glory be to Allah",
+    "suggestedCount": 33,
+    "benefits": "A tree is planted in Paradise for the reciter. Heavy in weight on the scales of good deeds.",
+    "category": "Daily Adhkar",
+    "tags": ["core", "daily", "tasbih-fatima"]
+  },
+  {
+    "id": "alhamdulillah",
+    "title": "Alhamdulillah",
+    "arabic": "الْحَمْدُ لِلَّهِ",
+    "transliteration": "Alhamdulillah",
+    "translation": "Praise be to Allah",
+    "suggestedCount": 33,
+    "benefits": "Fills the scale of good deeds with blessings. Expands gratitude and brings peace.",
+    "category": "Daily Adhkar",
+    "tags": ["core", "daily", "tasbih-fatima"]
+  },
+  {
+    "id": "allahu_akbar",
+    "title": "Allahu Akbar",
+    "arabic": "اللَّهُ أَكْبَرُ",
+    "transliteration": "Allahu Akbar",
+    "translation": "Allah is the Greatest",
+    "suggestedCount": 34,
+    "benefits": "Declaring Allah's supremacy. Part of the Tasbih of Fatima (r.a.) before sleeping.",
+    "category": "Daily Adhkar",
+    "tags": ["core", "daily", "tasbih-fatima"]
+  },
+  {
+    "id": "astaghfirullah",
+    "title": "Astaghfirullah",
+    "arabic": "أَسْتَغْفِرُ اللَّهَ",
+    "transliteration": "Astaghfirullah",
+    "translation": "I seek forgiveness from Allah",
+    "suggestedCount": 100,
+    "benefits": "Removes sins, opens gates of mercy, increases sustenance, and brings relief from anxiety.",
+    "category": "Istighfar",
+    "tags": ["core", "daily", "forgiveness"]
+  },
+  {
+    "id": "la_ilaha_illallah",
+    "title": "La ilaha illallah",
+    "arabic": "لَا إِلَهَ إِلَّا اللَّهُ",
+    "transliteration": "La ilaha illallah",
+    "translation": "There is no deity worthy of worship except Allah",
+    "suggestedCount": 100,
+    "benefits": "The best statement of remembrance. Keeps faith renewed and protects the heart.",
+    "category": "Tawheed",
+    "tags": ["core", "daily", "essential"]
+  },
+  {
+    "id": "durood_sharif",
+    "title": "Durood Sharif (Salawat)",
+    "arabic": "اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ",
+    "transliteration": "Allahumma salli wa sallim 'ala Nabiyyina Muhammad",
+    "translation": "O Allah, send blessings and peace upon our Prophet Muhammad",
+    "suggestedCount": 100,
+    "benefits": "Allah sends 10 blessings upon you for every 1 Durood. Elevates status and clears worries.",
+    "category": "Durood",
+    "tags": ["core", "friday", "essential"]
+  },
+  {
+    "id": "morning_adhkar_la_ilaha",
+    "title": "Tawheed Decal (Morning)",
+    "arabic": "لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ",
+    "transliteration": "La ilaha illallahu wahdahu la sharika lahu, lahul-mulku wa lahul-hamdu, wa Huwa 'ala kulli shai'in Qadir",
+    "translation": "None has the right to be worshipped except Allah, alone, without partner. To Him belongs all sovereignty and praise, and He is over all things Omnipotent.",
+    "suggestedCount": 100,
+    "benefits": "Equivalent to freeing ten slaves, 100 good deeds recorded, 100 sins erased, and protection from Shaytan all day.",
+    "category": "Morning Adhkar",
+    "tags": ["morning", "protection"]
+  },
+  {
+    "id": "evening_adhkar_subhanallah_bihamdihi",
+    "title": "Glorification (Evening)",
+    "arabic": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+    "transliteration": "SubhanAllahi wa bihamdihi",
+    "translation": "Glory be to Allah and praise is due to Him",
+    "suggestedCount": 100,
+    "benefits": "Sins are forgiven even if they are like the foam of the sea. No one will bring anything better on Judgement Day except one who says the same or more.",
+    "category": "Evening Adhkar",
+    "tags": ["evening", "daily", "glorification"]
+  },
+  {
+    "id": "friday_adhkar_salawat",
+    "title": "Friday Salawat",
+    "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَآلِهِ",
+    "transliteration": "Allahumma salli 'ala Sayyidina Muhammadin wa alihi",
+    "translation": "O Allah, send blessings upon our master Muhammad and his family",
+    "suggestedCount": 1000,
+    "benefits": "Prophet Muhammad (PBUH) receives Friday blessings directly. Brings closeness to him on the Day of Resurrection.",
+    "category": "Friday Adhkar Collection",
+    "tags": ["friday", "durood", "khatm"]
+  }
+]

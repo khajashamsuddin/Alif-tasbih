@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0F5A3C">
+  <meta name="theme-color" media="(prefers-color-scheme: light)" content="#0D5238">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="description" content="Alif Tasbih — Islamic Dhikr, Duas, Hadith & Battles Companion">
+  <link rel="manifest" href="./manifest.json">
+  <title>Alif Tasbih</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    /* ══ THEME TOKENS ══ */
+    :root {
+      color-scheme: light dark;
+      --bg: #090C0B;
+      --surface: #111614;
+      --card: #171D1A;
+      --card2: #1C2220;
+      --primary: #0D5238;
+      --primary-light: #178559;
+      --primary-xlight: #1FA96E;
+      --accent: #C9A227;
+      --accent-dim: rgba(201,162,39,.12);
+      --text: #E8ECEB;
+      --text-muted: #7A8C84;
+      --border: rgba(255,255,255,.07);
+      --border2: rgba(255,255,255,.04);
+      --red: #C0392B;
+      --red-dim: rgba(192,57,43,.15);
+      --font-h: 'Outfit', sans-serif;
+      --font-b: 'Inter', sans-serif;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+    @media(prefers-color-scheme: light) {
+      :root {
+        --bg: #F0F4F2;
+        --surface: #FFFFFF;
+        --card: #F5F9F7;
+        --card2: #EBF2EE;
+        --primary: #0D5238;
+        --primary-light: #178559;
+        --primary-xlight: #1FA96E;
+        --accent: #B8860B;
+        --accent-dim: rgba(184,134,11,.1);
+        --text: #0D1A14;
+        --text-muted: #4A6558;
+        --border: rgba(0,0,0,.08);
+        --border2: rgba(0,0,0,.04);
+        --red: #C0392B;
+        --red-dim: rgba(192,57,43,.10);
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; position: fixed; inset: 0; overflow: hidden; width: 100%; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-b); font-size: 14px;
+      display: flex; justify-content: center; align-items: stretch;
+    }
+    @media(prefers-color-scheme: light) { body { background: #E0E9E4; } }
+
+    /* ── SHELL ── */
+    #app {
+      width: 100%;
+      max-width: 480px;
+      height: 100%;
+      background: var(--surface);
+      display: flex; flex-direction: column;
+      position: relative; overflow: hidden;
+      flex-shrink: 0;
+    }
+    @media(min-width: 481px) {
+      body { align-items: center; }
+      #app {
+        height: 100%;
+        max-height: 850px;
+        border-radius: 28px;
+        border: 1px solid var(--border);
+        box-shadow: 0 32px 80px rgba(0,0,0,.5);
+      }
+    }
+
+    /* ── INSTALL BANNER ── */
+    #install-banner {
+      background: linear-gradient(135deg, #0D5238, #0A3D29);
+      border-bottom: 1px solid rgba(201,162,39,.25);
+      padding: 10px 16px;
+      padding-top: calc(10px + var(--safe-top));
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0; transition: max-height .3s ease, opacity .3s ease;
+      max-height: 80px; overflow: hidden;
+    }
+    #install-banner.hidden { max-height: 0; opacity: 0; padding: 0; border: none; }
+    .banner-icon { width: 30px; height: 30px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+    .banner-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .banner-text { flex: 1; min-width: 0; }
+    .banner-text strong { font-size: 12px; font-weight: 700; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+    .banner-text span { font-size: 10px; color: rgba(255,255,255,.6); }
+    .banner-install-btn { background: var(--accent); color: #000; font-size: 11px; font-weight: 700; border: none; border-radius: 8px; padding: 5px 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .banner-close { width: 24px; height: 24px; border: none; background: rgba(255,255,255,.12); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: rgba(255,255,255,.7); font-size: 13px; font-weight: 700; }
+
+    /* ── HEADER ── */
+    header {
+      padding: 13px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+      background: var(--surface);
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-logo { width: 34px; height: 34px; border-radius: 10px; overflow: hidden; flex-shrink: 0; box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+    .header-logo img { width: 100%; height: 100%; object-fit: cover; }
+    header h1 { font-family: var(--font-h); font-size: 17px; font-weight: 800; letter-spacing: .3px; }
+    .streak-chip { display: flex; align-items: center; gap: 5px; background: var(--accent-dim); color: var(--accent); font-size: 10px; font-weight: 700; padding: 5px 10px; border-radius: 20px; border: 1px solid rgba(201,162,39,.2); white-space: nowrap; }
+    .streak-chip svg { width: 11px; height: 11px; fill: var(--accent); }
+
+    /* ── SCROLL AREA & TABS ── */
+    .main-scroll-area {
+      flex: 1; min-height: 0;
+      overflow-y: auto; overflow-x: hidden;
+      display: flex; flex-direction: column;
+      scrollbar-width: thin; -webkit-overflow-scrolling: touch;
+    }
+    .main-scroll-area::-webkit-scrollbar { width: 3px; }
+    .main-scroll-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .tab { display: none; flex-direction: column; padding: 16px; padding-bottom: 40px; }
+    .tab.active { display: flex; flex: 1; }
+
+    /* ── BOTTOM NAV ── */
+    nav {
+      border-top: 1px solid var(--border);
+      display: flex; background: var(--surface);
+      flex-shrink: 0;
+      min-height: 58px;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .nav-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 3px; color: var(--text-muted);
+      font-size: 9px; font-weight: 600; cursor: pointer;
+      border: none; background: none; letter-spacing: .3px;
+      transition: color .15s; padding: 10px 4px 10px;
+      min-width: 0;
+    }
+    .nav-btn.active { color: var(--primary-light); }
+    .nav-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .nav-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+    /* ── SHARED COMPONENTS ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 15px; }
+    .sec-title { font-family: var(--font-h); font-size: 15px; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+    .btn {
+      border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px;
+      background: rgba(0,0,0,.03); color: var(--text); font-size: 13px;
+      font-weight: 600; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 7px; transition: all .15s; font-family: var(--font-b);
+      width: 100%; flex-shrink: 0; white-space: nowrap;
+    }
+    @media(prefers-color-scheme: dark){ .btn { background: rgba(255,255,255,.03); } }
+    .btn:hover { background: var(--card2); }
+    .btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; flex-shrink: 0; }
+    .btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-light); border-color: var(--primary-light); }
+    .btn-danger { background: var(--red-dim); border-color: rgba(192,57,43,.3); color: var(--red); }
+    .inp {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 11px 14px; color: var(--text);
+      font-size: 13px; outline: none; width: 100%; font-family: var(--font-b);
+    }
+    .inp::placeholder { color: var(--text-muted); }
+    .inp:focus { border-color: var(--primary-light); }
+
+    /* ══ COUNTER ══ */
+    .counter-layout { display: flex; flex-direction: column; align-items: center; gap: 12px; flex: 1; }
+    .sel-row { display: flex; gap: 8px; width: 100%; }
+
+    /* Themed dhikr picker button */
+    .dhikr-picker-btn {
+      flex: 1; background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 11px 14px; color: var(--text); font-size: 13px;
+      font-weight: 600; outline: none; cursor: pointer; font-family: var(--font-b);
+      min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      transition: background .15s;
+    }
+    .dhikr-picker-btn:hover { background: var(--card2); }
+    .dhikr-picker-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: left; }
+    .dhikr-picker-btn svg { width: 14px; height: 14px; stroke: var(--text-muted); fill: none; stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+    .add-btn { width: 46px; height: 46px; border-radius: 12px; background: var(--primary); border: none; color: #fff; font-size: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 300; transition: background .15s; }
+    .add-btn:hover { background: var(--primary-light); }
+
+    /* Dhikr picker sheet */
+    #dhikr-sheet {
+      position: absolute; inset: 0; z-index: 60;
+      display: none; flex-direction: column;
+      background: var(--surface);
+    }
+    #dhikr-sheet.open { display: flex; }
+    .sheet-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .sheet-header h3 { font-family: var(--font-h); font-size: 16px; font-weight: 800; }
+    .sheet-close { width: 30px; height: 30px; border: none; background: var(--card); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); }
+    .sheet-close svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .sheet-body { flex: 1; min-height: 0; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .sheet-section-lbl { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; padding: 4px 4px 2px; }
+    .dhikr-row {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; cursor: pointer; transition: all .15s;
+    }
+    .dhikr-row:hover { background: var(--card2); }
+    .dhikr-row.selected { border-color: var(--primary-light); background: rgba(23,133,89,.08); }
+    .dhikr-row-info { flex: 1; min-width: 0; }
+    .dhikr-row-arabic { font-family: 'Amiri', serif; font-size: 17px; color: var(--primary-light); line-height: 1.3; }
+    .dhikr-row-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dhikr-row-target { font-family: var(--font-h); font-size: 11px; font-weight: 700; color: var(--accent); background: var(--accent-dim); padding: 2px 7px; border-radius: 8px; flex-shrink: 0; }
+    .dhikr-row-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .dhikr-action-btn { width: 28px; height: 28px; border: 1px solid var(--border); background: var(--surface); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all .15s; }
+    .dhikr-action-btn svg { width: 13px; height: 13px; stroke: var(--text-muted); fill: none; stroke-width: 2; stroke-linecap: round; }
+    .dhikr-action-btn:hover { background: var(--primary); border-color: var(--primary); }
+    .dhikr-action-btn:hover svg { stroke: #fff; }
+    .dhikr-del-btn:hover { background: var(--red-dim) !important; border-color: rgba(192,57,43,.4) !important; }
+    .dhikr-del-btn:hover svg { stroke: var(--red) !important; }
+
+    .arabic-disp { font-family: 'Amiri', serif; font-size: 28px; color: var(--primary-light); text-align: center; line-height: 1.5; padding: 0 8px; min-height: 46px; word-break: break-word; }
+    .translit-disp { font-size: 13px; font-weight: 500; font-style: italic; color: var(--text); text-align: center; margin-bottom: 4px; }
+    .meaning-disp { font-size: 12px; color: var(--text-muted); text-align: center; }
+
+    .tap-wrap { position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; touch-action: manipulation; }
+    .ring-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: var(--border); stroke-width: 5; }
+    .ring-prog  { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset .1s ease; }
+    .tap-circle {
+      width: 165px; height: 165px; border-radius: 50%;
+      background: radial-gradient(circle, var(--card2) 10%, var(--card) 100%);
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 24px rgba(0,0,0,.3), inset 0 1px 4px rgba(255,255,255,.04);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      transition: transform .06s; user-select: none;
+    }
+    .tap-circle:active { transform: scale(.96); }
+    .tap-num { font-family: var(--font-h); font-size: 46px; font-weight: 800; line-height: 1; }
+    .tap-sub { font-size: 11px; color: var(--accent); font-weight: 700; background: var(--accent-dim); padding: 2px 8px; border-radius: 8px; margin-top: 4px; }
+    .ctr-actions { display: flex; gap: 10px; width: 100%; margin-top: auto; }
+    .ctr-actions .btn { flex: 1; }
+
+    /* ══ DUAS ══ */
+    .dua-search-wrap { position: relative; margin-bottom: 12px; flex-shrink: 0; }
+    .dua-search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; stroke: var(--text-muted); fill: none; stroke-width: 2; stroke-linecap: round; }
+    #dua-search { padding-left: 36px; }
+    .cat-chips { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; padding-bottom: 2px; scrollbar-width: none; flex-shrink: 0; }
+    .cat-chips::-webkit-scrollbar { display: none; }
+    .chip { flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 5px 11px; font-size: 11px; font-weight: 600; cursor: pointer; color: var(--text-muted); transition: all .15s; white-space: nowrap; }
+    .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .dua-item { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 13px; margin-bottom: 8px; cursor: pointer; transition: background .15s; }
+    .dua-item:hover { background: var(--card2); }
+    .dua-item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+    .dua-item-title { font-family: var(--font-h); font-size: 13px; font-weight: 700; }
+    .dua-cat-badge { font-size: 9px; font-weight: 700; color: var(--accent); background: var(--accent-dim); padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
+    .dua-item-preview { font-size: 11px; color: var(--text-muted); line-height: 1.45; }
+
+    /* dua detail overlay */
+    #dua-detail { position: absolute; inset: 0; background: var(--surface); display: none; flex-direction: column; padding: 18px; overflow-y: auto; z-index: 20; }
+    #dua-detail.open { display: flex; }
+    .back-row { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-bottom: 16px; flex-shrink: 0; }
+    .back-row svg { width: 16px; height: 16px; stroke: var(--text-muted); fill: none; stroke-width: 2; stroke-linecap: round; }
+    .back-row span { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+    .detail-arabic { font-family: 'Amiri', serif; font-size: 22px; line-height: 1.9; direction: rtl; text-align: center; padding: 16px 12px; background: rgba(13,82,56,.08); border: 1px solid rgba(23,133,89,.15); border-radius: 14px; color: var(--primary-light); margin-bottom: 14px; }
+    .detail-sec-lbl { font-size: 10px; font-weight: 700; color: var(--accent); margin-bottom: 4px; letter-spacing: .5px; text-transform: uppercase; }
+    .detail-sec-text { font-size: 13px; color: var(--text-muted); line-height: 1.65; margin-bottom: 14px; }
+    .detail-ref { font-size: 10px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 10px; opacity: .7; }
+
+    /* ══ HADITH / BATTLES TABS ══ */
+    .htab-row { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+    .htab-row::-webkit-scrollbar { display: none; }
+    .htab-btn { flex-shrink: 0; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 8px 14px; font-size: 12px; font-weight: 700; color: var(--text-muted); cursor: pointer; transition: all .15s; white-space: nowrap; }
+    .htab-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .hpane { display: none; flex-direction: column; gap: 12px; }
+    .hpane.active { display: flex; }
+    .hadith-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 15px; }
+    .hadith-num { font-size: 10px; font-weight: 700; color: var(--accent); background: var(--accent-dim); display: inline-block; padding: 2px 8px; border-radius: 8px; margin-bottom: 10px; }
+    .hadith-arabic { font-family: 'Amiri', serif; font-size: 18px; direction: rtl; text-align: right; line-height: 1.8; color: var(--primary-light); margin-bottom: 10px; padding-right: 10px; border-right: 2px solid var(--primary); word-break: break-word; }
+    .hadith-text { font-size: 13px; line-height: 1.65; color: var(--text); margin-bottom: 8px; }
+    .hadith-source { font-size: 10px; color: var(--text-muted); font-style: italic; }
+
+    /* Islamic Battles */
+    .battle-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; cursor: pointer; transition: all .15s; }
+    .battle-card:hover { border-color: var(--primary); }
+    .battle-header { display: flex; align-items: center; justify-content: space-between; padding: 14px; }
+    .battle-title-wrap { flex: 1; min-width: 0; }
+    .battle-name { font-family: var(--font-h); font-size: 14px; font-weight: 800; color: var(--text); }
+    .battle-year { font-size: 10px; color: var(--accent); font-weight: 700; background: var(--accent-dim); padding: 2px 8px; border-radius: 8px; display: inline-block; margin-top: 4px; }
+    .battle-chevron { font-size: 18px; color: var(--text-muted); transition: transform .2s; flex-shrink: 0; margin-left: 8px; }
+    .battle-card.open .battle-chevron { transform: rotate(90deg); }
+    .battle-body { display: none; padding: 0 14px 14px; }
+    .battle-card.open .battle-body { display: block; }
+    .battle-arabic { font-family: 'Amiri', serif; font-size: 16px; direction: rtl; text-align: right; color: var(--primary-light); line-height: 1.7; margin-bottom: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
+    .battle-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.7; }
+    .battle-outcome { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 10px; }
+    .outcome-v { background: rgba(23,133,89,.15); color: var(--primary-light); border: 1px solid rgba(23,133,89,.3); }
+    .outcome-d { background: var(--red-dim); color: var(--red); border: 1px solid rgba(192,57,43,.3); }
+    .outcome-i { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(201,162,39,.3); }
+
+    /* ══ STATS & GOALS ══ */
+    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+    .stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 13px; }
+    .stat-box-icon { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 6px; }
+    .stat-box-icon svg { width: 14px; height: 14px; }
+    .stat-val { font-family: var(--font-h); font-size: 26px; font-weight: 800; }
+    .stat-lbl { font-size: 9.5px; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .5px; }
+    .chart-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px; margin-bottom: 14px; }
+    .chart-title { font-size: 10px; color: var(--text-muted); font-weight: 700; margin-bottom: 12px; letter-spacing: .4px; text-transform: uppercase; }
+    .chart { height: 100px; display: flex; align-items: flex-end; justify-content: space-around; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .bar { width: 13px; border-radius: 3px 3px 0 0; background: var(--primary); transition: height .4s ease; min-height: 4px; }
+    .bar.today { background: var(--accent); }
+    .bar-lbl { font-size: 9px; color: var(--text-muted); font-weight: 600; }
+    .goals-section { background: var(--card); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 14px; }
+    .goals-header { display: flex; justify-content: space-between; align-items: center; padding: 13px 14px; border-bottom: 1px solid var(--border); }
+    .goals-header-left { display: flex; align-items: center; gap: 8px; }
+    .goals-header-left svg { width: 14px; height: 14px; stroke: var(--primary-light); fill: none; stroke-width: 1.8; stroke-linecap: round; flex-shrink: 0; }
+    .goals-reset-note { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    #todo-list { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+    .todo-item { display:flex; align-items:center; justify-content:space-between; background: var(--surface); border:1px solid var(--border); padding:11px 12px; border-radius:10px; transition:all .2s; }
+    .todo-item.done { background: rgba(23,133,89,.08); border-color: rgba(23,133,89,.25); }
+    .todo-item-left { display:flex; align-items:center; gap:10px; flex:1; cursor:pointer; min-width: 0; }
+    .todo-check { width:20px; height:20px; border-radius:6px; border:2px solid var(--border); background: var(--card); display:flex; align-items:center; justify-content:center; transition:all .2s; flex-shrink:0; }
+    .todo-item.done .todo-check { background: var(--primary); border-color: var(--primary); }
+    .todo-item.done .todo-check::after { content:''; width:4px; height:8px; border-right:2px solid #fff; border-bottom:2px solid #fff; transform:rotate(45deg) translate(-1px,-1px); display:block; }
+    .todo-text { font-size:12.5px; font-weight:500; color:var(--text); transition:color .2s; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .todo-item.done .todo-text { color:var(--primary-light); text-decoration:line-through; opacity:0.7; }
+    .todo-del { width:28px; height:28px; background:none; border:none; color:var(--text-muted); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; border-radius:6px; transition: all .15s; }
+    .todo-del svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; }
+    .todo-del:hover { color:var(--red); background: var(--red-dim); }
+
+    /* ══ SETTINGS ══ */
+    .settings-section { margin-bottom: 18px; }
+    .settings-section-title { font-size: 10px; color: var(--text-muted); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+    .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 6px; }
+    .setting-row-label { display: flex; align-items: center; gap: 10px; }
+    .setting-row-label svg { width: 16px; height: 16px; stroke: var(--text-muted); fill: none; stroke-width: 1.8; stroke-linecap: round; flex-shrink: 0; }
+    .setting-row-label span { font-size: 13px; font-weight: 500; }
+    .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: rgba(0,0,0,.15); border-radius: 11px; cursor: pointer; transition: background .2s; }
+    @media(prefers-color-scheme: dark){ .toggle-slider { background: rgba(255,255,255,.1); } }
+    .toggle-slider::before { content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: transform .2s; }
+    .toggle input:checked + .toggle-slider { background: var(--primary-light); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+    .creator-card { background: var(--accent-dim); border: 1px solid rgba(201,162,39,.18); border-radius: 14px; padding: 15px; }
+    .creator-card h4 { font-family: var(--font-h); font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+    .creator-card p { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 4px; }
+    .creator-card a { color: var(--primary-light); font-weight: 600; }
+    .creator-card strong { color: var(--text); }
+
+    /* ══ MODALS ══ */
+    .modal-bg { position: absolute; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 50; }
+    .modal-bg.open { display: flex; }
+    .modal { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.5); max-height: 85vh; overflow-y: auto; }
+    .modal h3 { font-family: var(--font-h); font-size: 16px; font-weight: 700; }
+    .form-lbl { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; letter-spacing: .3px; }
+    .modal-row { display: flex; gap: 10px; }
+    .modal-row .btn { flex: 1; }
+
+    /* ══ PRAYER TIMES WIDGET ══ */
+    .prayer-banner { background: linear-gradient(135deg, var(--primary), #072D1D); border: 1px solid rgba(201,162,39,.2); border-radius: 14px; padding: 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .prayer-info h4 { font-family: var(--font-h); font-size: 13px; font-weight: 700; color: rgba(255,255,255,.9); }
+    .prayer-info p { font-size: 11px; color: rgba(255,255,255,.6); margin-top: 2px; }
+    .prayer-time-display { font-family: var(--font-h); font-size: 22px; font-weight: 800; color: var(--accent); }
+
+    /* ══ TASBIH SUMMARY ══ */
+    .dhikr-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+    .ds-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .ds-name { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ds-val { font-family: var(--font-h); font-size: 20px; font-weight: 800; color: var(--primary-light); }
+
+    /* ══ NAMES OF ALLAH SECTION ══ */
+    .names-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .name-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; text-align: center; }
+    .name-arabic { font-family: 'Amiri', serif; font-size: 17px; color: var(--primary-light); line-height: 1.3; margin-bottom: 4px; }
+    .name-english { font-size: 9.5px; color: var(--text-muted); font-weight: 500; }
+
+
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- INSTALL BANNER -->
+  <div id="install-banner" class="hidden">
+    <div class="banner-icon">
+      <img src="./assets/logo.png" alt="Logo">
+    </div>
+    <div class="banner-text">
+      <strong>Install Alif Tasbih</strong>
+      <span>Add to home screen</span>
+    </div>
+    <button class="banner-install-btn" id="btn-banner-install">Install</button>
+    <button class="banner-close" id="btn-banner-close">✕</button>
+  </div>
+
+  <!-- MAIN SCROLL AREA -->
+  <div class="main-scroll-area">
+
+    <!-- HEADER -->
+    <header>
+      <div class="header-left">
+        <div class="header-logo">
+          <img src="./assets/logo.png" alt="Alif">
+        </div>
+        <h1>Alif Tasbih</h1>
+      </div>
+      <div class="streak-chip">
+        <svg viewBox="0 0 24 24"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/></svg>
+        <span id="streak-val">1</span>&nbsp;Day
+      </div>
+    </header>
+
+  <!-- ══ COUNTER ══ -->
+  <div id="tab-counter" class="tab active">
+    <div class="counter-layout">
+
+      <!-- Next Prayer Mini Widget -->
+      <div class="prayer-banner" id="prayer-widget" style="display:none;">
+        <div class="prayer-info">
+          <h4 id="pw-name">Next Prayer</h4>
+          <p id="pw-label">Time remaining</p>
+        </div>
+        <div class="prayer-time-display" id="pw-time">—</div>
+      </div>
+
+      <div class="sel-row">
+        <button class="dhikr-picker-btn" id="btn-open-sheet">
+          <span id="picker-label">SubhanAllah</span>
+          <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <button class="add-btn" id="btn-open-add" title="Add custom dhikr">
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.5;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+      <div class="arabic-disp" id="arabic-disp">سُبْحَانَ اللَّهِ</div>
+      <div class="translit-disp" id="translit-disp">SubhanAllah</div>
+      <div class="meaning-disp" id="meaning-disp">Glory be to Allah</div>
+
+      <div class="tap-wrap" id="tap-btn">
+        <svg class="ring-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+          <circle class="ring-track" cx="100" cy="100" r="90"/>
+          <circle class="ring-prog"  cx="100" cy="100" r="90" id="ring-prog"/>
+        </svg>
+        <div class="tap-circle">
+          <span class="tap-num" id="count-disp">0</span>
+          <span class="tap-sub" id="target-disp">/ 33</span>
+        </div>
+      </div>
+
+      <div class="ctr-actions">
+        <button class="btn" id="btn-reset">
+          <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+          Reset
+        </button>
+        <button class="btn btn-primary" id="btn-undo">
+          <svg viewBox="0 0 24 24"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
+          Undo
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DUAS ══ -->
+  <div id="tab-duas" class="tab">
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+      <div class="dua-search-wrap" style="margin-bottom:0;flex:1;">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="inp" id="dua-search" placeholder="Search duas...">
+      </div>
+      <button class="add-btn" id="btn-open-add-dua" title="Add custom dua" style="background:var(--accent);">
+        <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:#000;fill:none;stroke-width:2.5;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div class="cat-chips" id="cat-chips">
+      <div class="chip active" data-cat="All">All</div>
+      <div class="chip" data-cat="Morning">Morning</div>
+      <div class="chip" data-cat="Evening">Evening</div>
+      <div class="chip" data-cat="Night">Night</div>
+      <div class="chip" data-cat="Protection">Protection</div>
+      <div class="chip" data-cat="Daily">Daily</div>
+      <div class="chip" data-cat="Emotion">Emotion</div>
+      <div class="chip" data-cat="Travel">Travel</div>
+      <div class="chip" data-cat="Food">Food</div>
+      <div class="chip" data-cat="Masjid">Masjid</div>
+      <div class="chip" data-cat="My Duas">My Duas</div>
+    </div>
+    <div id="duas-list"></div>
+  </div>
+
+  <!-- DUA DETAIL OVERLAY -->
+  <div id="dua-detail">
+    <div class="back-row" id="dua-back">
+      <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+      <span>Back to Duas</span>
+    </div>
+    <h2 id="dd-title" style="font-family:var(--font-h);font-size:18px;font-weight:800;margin-bottom:4px"></h2>
+    <div id="dd-cat" style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:16px"></div>
+    <div class="detail-arabic" id="dd-arabic"></div>
+    <div class="detail-sec-lbl">Transliteration</div>
+    <div class="detail-sec-text" id="dd-trans"></div>
+    <div class="detail-sec-lbl">Translation</div>
+    <div class="detail-sec-text" id="dd-meaning"></div>
+    <div class="detail-ref" id="dd-ref"></div>
+  </div>
+
+  <!-- ══ HADITH / HISTORY ══ -->
+  <div id="tab-hadith" class="tab">
+    <div class="htab-row">
+      <button class="htab-btn active" data-htab="hadiths">Hadiths</button>
+      <button class="htab-btn" data-htab="battles">Islamic Battles</button>
+      <button class="htab-btn" data-htab="names">Names of Allah</button>
+      <button class="htab-btn" data-htab="prophets">Names of Prophets</button>
+      <button class="htab-btn" data-htab="seerah">Prophet ﷺ Stories</button>
+
+    </div>
+
+    <div class="hpane active" id="pane-hadiths"></div>
+    <div class="hpane" id="pane-battles"></div>
+    <div class="hpane" id="pane-names">
+      <div class="names-grid" id="names-grid"></div>
+    </div>
+    <div class="hpane" id="pane-prophets">
+      <div class="names-grid" id="prophets-grid"></div>
+    </div>
+    <div class="hpane" id="pane-seerah"></div>
+  </div>
+
+  <!-- ══ STATS & GOALS ══ -->
+  <div id="tab-stats" class="tab">
+    <!-- Today's Summary -->
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-box-icon" style="background:rgba(23,133,89,.12);"><svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;stroke-linecap:round;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <div class="stat-val" id="s-total">0</div>
+        <div class="stat-lbl">Total Recited</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-icon" style="background:rgba(201,162,39,.12);"><svg viewBox="0 0 24 24" style="fill:var(--accent);stroke:none;"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/></svg></div>
+        <div class="stat-val" id="s-streak">1</div>
+        <div class="stat-lbl">Day Streak</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-icon" style="background:rgba(23,133,89,.12);"><svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <div class="stat-val" id="s-done-todos">0</div>
+        <div class="stat-lbl">Goals Today</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-icon" style="background:rgba(201,162,39,.12);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
+        <div class="stat-val" id="s-sessions">0</div>
+        <div class="stat-lbl">Sessions</div>
+      </div>
+    </div>
+
+    <!-- Per-Dhikr Summary -->
+    <div class="chart-title" style="margin-bottom:8px;">Per-Dhikr Counts</div>
+    <div class="dhikr-summary" id="dhikr-summary"></div>
+
+    <!-- Weekly Chart -->
+    <div class="chart-wrap">
+      <div class="chart-title">This Week</div>
+      <div class="chart" id="week-chart"></div>
+    </div>
+
+    <!-- Daily Goals -->
+    <div class="goals-section">
+      <div class="goals-header">
+        <div class="goals-header-left">
+          <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <div>
+            <div class="chart-title" style="margin:0;">Daily Islamic Goals</div>
+            <div class="goals-reset-note">Resets every midnight</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" id="btn-add-todo" style="width:auto;padding:6px 12px;font-size:11px;border-radius:8px;">+ Add</button>
+      </div>
+      <div id="todo-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div id="tab-settings" class="tab">
+    <div class="settings-section">
+      <div class="settings-section-title">Preferences</div>
+      <div class="setting-row">
+        <div class="setting-row-label">
+          <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <span>Sound Effects</span>
+        </div>
+        <label class="toggle"><input type="checkbox" id="set-sound" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div class="setting-row-label">
+          <svg viewBox="0 0 24 24"><path d="M5 3v4M3 5h4M6 17v4M4 19h4"/><rect x="9" y="7" width="8" height="12" rx="1"/></svg>
+          <span>Vibration</span>
+        </div>
+        <label class="toggle"><input type="checkbox" id="set-vibrate" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">App</div>
+      <button class="btn" id="btn-settings-install" style="margin-bottom:6px">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Install App on Device
+      </button>
+      <button class="btn btn-danger" id="btn-clear-data">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Clear All Data
+      </button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">Creator</div>
+      <div class="creator-card">
+        <h4>Feature Suggestions</h4>
+        <p>Have an idea or feedback? Contact the creator directly:</p>
+        <p><strong>Shamsuddin</strong></p>
+        <p><a href="mailto:Khajashamsuddin.a@gmail.com">Khajashamsuddin.a@gmail.com</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD TODO MODAL -->
+  <div class="modal-bg" id="modal-todo">
+    <div class="modal">
+      <h3>Add Daily Goal</h3>
+      <div>
+        <div class="form-lbl">Goal Title *</div>
+        <input class="inp" id="t-title" placeholder="e.g. Pray Tahajjud">
+      </div>
+      <div class="modal-row" style="margin-top:4px;">
+        <button class="btn" id="btn-cancel-todo">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-todo">Add Goal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT DHIKR MODAL -->
+  <div class="modal-bg" id="modal-add">
+    <div class="modal">
+      <h3 id="modal-add-title">Add Dhikr</h3>
+      <input type="hidden" id="c-edit-id">
+      <div>
+        <div class="form-lbl">Name / Title *</div>
+        <input class="inp" id="c-title" placeholder="e.g. Hasbunallah">
+      </div>
+      <div>
+        <div class="form-lbl">Arabic Script</div>
+        <input class="inp" id="c-arabic" placeholder="حَسْبُنَا اللَّهُ" style="direction:rtl;text-align:right;font-family:'Amiri',serif;font-size:18px;">
+      </div>
+      <div>
+        <div class="form-lbl">Transliteration</div>
+        <input class="inp" id="c-translit" placeholder="Hasbunallah">
+      </div>
+      <div>
+        <div class="form-lbl">Translation / Meaning</div>
+        <input class="inp" id="c-trans" placeholder="Allah is sufficient for us">
+      </div>
+      <div>
+        <div class="form-lbl">Target Count</div>
+        <input class="inp" id="c-target" type="number" value="33" min="1">
+      </div>
+      <div class="modal-row">
+        <button class="btn" id="btn-cancel-add">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-add">Save Dhikr</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT DUA MODAL -->
+  <div class="modal-bg" id="modal-add-dua">
+    <div class="modal">
+      <h3 id="modal-dua-title">Add Custom Dua</h3>
+      <input type="hidden" id="cd-edit-id">
+      <div>
+        <div class="form-lbl">Title *</div>
+        <input class="inp" id="cd-title" placeholder="e.g. Dua for Success">
+      </div>
+      <div>
+        <div class="form-lbl">Arabic Text</div>
+        <textarea class="inp" id="cd-arabic" rows="3" placeholder="اللَّهُمَّ..." style="direction:rtl;text-align:right;font-family:'Amiri',serif;font-size:18px;resize:none;"></textarea>
+      </div>
+      <div>
+        <div class="form-lbl">Transliteration</div>
+        <input class="inp" id="cd-trans" placeholder="Allahumma...">
+      </div>
+      <div>
+        <div class="form-lbl">Translation / Meaning *</div>
+        <textarea class="inp" id="cd-meaning" rows="2" placeholder="O Allah..." style="resize:none;"></textarea>
+      </div>
+      <div>
+        <div class="form-lbl">Reference (optional)</div>
+        <input class="inp" id="cd-ref" placeholder="Sahih Bukhari 123">
+      </div>
+      <div class="modal-row">
+        <button class="btn" id="btn-cancel-add-dua">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-add-dua">Save Dua</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DHIKR PICKER SHEET -->
+  <div id="dhikr-sheet">
+    <div class="sheet-header">
+      <h3>Select Dhikr</h3>
+      <button class="sheet-close" id="btn-close-sheet">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="sheet-body"></div>
+  </div>
+
+  </div> <!-- /main-scroll-area -->
+
+  <!-- NAV -->
+  <nav>
+    <button class="nav-btn active" data-tab="counter">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" stroke-width="2"/></svg>
+      <span>Counter</span>
+    </button>
+    <button class="nav-btn" data-tab="duas">
+      <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span>Duas</span>
+    </button>
+    <button class="nav-btn" data-tab="hadith">
+      <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Knowledge</span>
+    </button>
+    <button class="nav-btn" data-tab="stats">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>Stats</span>
+    </button>
+    <button class="nav-btn" data-tab="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Settings</span>
+    </button>
+  </nav>
+
+</div>
+<script>
+/* ═══════════════════════════════════════
+   DATA — DHIKR
+═══════════════════════════════════════ */
+const DHIKR_DB = {
+  subhanallah:    { arabic:'سُبْحَانَ اللَّهِ',                                   translit:'SubhanAllah', trans:'Glory be to Allah',                          target:33  },
+  alhamdulillah:  { arabic:'الْحَمْدُ لِلَّهِ',                                    translit:'Alhamdulillah', trans:'All praise is for Allah',                    target:33  },
+  allahuakbar:    { arabic:'اللَّهُ أَكْبَرُ',                                      translit:'Allahu Akbar', trans:'Allah is the Greatest',                      target:34  },
+  astaghfirullah: { arabic:'أَسْتَغْفِرُ اللَّهَ الْعَظِيمَ',                     translit:'Astaghfirullahal-Azim', trans:'I seek forgiveness from Allah the Mighty',   target:100 },
+  lailahaillallah:{ arabic:'لَا إِلَٰهَ إِلَّا اللَّهُ',                          translit:'La ilaha illallah', trans:'There is no god but Allah',                  target:100 },
+  salawat:        { arabic:'اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ', translit:'Allahumma salli ala Muhammadin wa ala ali Muhammad', trans:'O Allah, send blessings upon Muhammad and his family', target:10 },
+  hasbi:          { arabic:'حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ',               translit:'Hasbunallahu wa ni\'mal wakil', trans:'Allah is sufficient for us and the best Trustee', target:10 }
+};
+
+/* ═══════════════════════════════════════
+   DATA — DUAS
+═══════════════════════════════════════ */
+const DUAS = [
+  { id:'d01', title:'Entering the Morning', cat:'Morning', arabic:'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ', trans:'Asbahna wa asbahal-mulku lillah, walhamdu lillah...', meaning:'We have entered the morning and all sovereignty belongs to Allah. Praise is to Allah.', ref:'Sahih Muslim 2723' },
+  { id:'d02', title:'Entering the Evening', cat:'Evening', arabic:'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ', trans:'Amsayna wa amsal-mulku lillah walhamdu lillah...', meaning:'We have entered the evening and all sovereignty belongs to Allah.', ref:'Sahih Muslim 2723' },
+  { id:'d03', title:'Morning Protection', cat:'Morning', arabic:'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ', trans:'Bismillahil-ladhi la yadurru ma\'a ismihi shay\'un fil-ardi wa la fis-sama\'i.', meaning:'In the Name of Allah with Whose name nothing is harmed on earth nor in the heavens.', ref:'Sunan Abi Dawud 5088' },
+  { id:'d04', title:'Ayat al-Kursi', cat:'Morning', arabic:'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ', trans:'Allahu la ilaha illa Huwal-Hayyul-Qayyum...', meaning:'Allah — there is no deity except Him, the Ever-Living, the Sustainer of existence.', ref:'Quran 2:255' },
+  { id:'d05', title:'Before Sleeping', cat:'Night', arabic:'بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا', trans:'Bismika Allahumma amutu wa ahya.', meaning:'In Your name, O Allah, I die and I live.', ref:'Sahih Bukhari 6324' },
+  { id:'d06', title:'When Waking Up', cat:'Night', arabic:'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا', trans:'Alhamdu lillahil-ladhi ahyana ba\'da ma amatana wa ilayhin-nushur.', meaning:'Praise is to Allah Who gives us life after He has caused us to die.', ref:'Sahih Bukhari 6312' },
+  { id:'d07', title:'Dua for Anxiety & Grief', cat:'Emotion', arabic:'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ', trans:'Allahumma inni a\'udhu bika minal-hammi wal-hazan...', meaning:'O Allah, I seek refuge in You from worry and grief, helplessness and laziness.', ref:'Sahih Bukhari 6369' },
+  { id:'d08', title:'Dua of Yunus AS', cat:'Emotion', arabic:'لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ', trans:'La ilaha illa Anta subhanaka inni kuntu minaz-zalimin.', meaning:'There is none worthy of worship except You, glory be to You, certainly I was among the wrongdoers.', ref:'Quran 21:87 — Tirmidhi 3505' },
+  { id:'d09', title:'Evening Protection', cat:'Evening', arabic:'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ', trans:'A\'udhu bi-kalimatillahit-tammati min sharri ma khalaqa.', meaning:'I seek refuge in the perfect words of Allah from the evil of what He has created.', ref:'Sahih Muslim 2709' },
+  { id:'d10', title:'Entering the Home', cat:'Daily', arabic:'بِسْمِ اللَّهِ وَلَجْنَا وَبِسْمِ اللَّهِ خَرَجْنَا', trans:'Bismillahi walajna, wa bismillahi kharajna, wa \'alallahi rabbina tawakkalna.', meaning:'In the name of Allah we enter, in the name of Allah we leave, and upon our Lord we rely.', ref:'Sunan Abi Dawud 5096' },
+  { id:'d11', title:'Leaving the Home', cat:'Daily', arabic:'بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ', trans:'Bismillahi, tawakkaltu alallah, la hawla wa la quwwata illa billah.', meaning:'In the name of Allah, I place my trust in Allah.', ref:'Sunan Abi Dawud 5095' },
+  { id:'d12', title:'Before Eating', cat:'Food', arabic:'بِسْمِ اللَّهِ وَعَلَى بَرَكَةِ اللَّهِ', trans:'Bismillahi wa ala barakatillah.', meaning:'In the name of Allah and with the blessings of Allah.', ref:'Sunan Abi Dawud 3767' },
+  { id:'d13', title:'After Eating', cat:'Food', arabic:'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا', trans:'Alhamdu lillahil-ladhi at\'amana wa saqana wa ja\'alana muslimin.', meaning:'Praise be to Allah Who has fed us, given us drink, and made us Muslims.', ref:'Sunan Abi Dawud 3850' },
+  { id:'d14', title:'Entering the Masjid', cat:'Masjid', arabic:'اللَّهُمَّ افْتَحْ لِي أَبْوَابَ رَحْمَتِكَ', trans:'Allahumma-ftah li abwaba rahmatik.', meaning:'O Allah, open the gates of Your mercy for me.', ref:'Sahih Muslim 713' },
+  { id:'d15', title:'Leaving the Masjid', cat:'Masjid', arabic:'اللَّهُمَّ إِنِّي أَسْأَلُكَ مِنْ فَضْلِكَ', trans:'Allahumma inni as\'aluka min fadlik.', meaning:'O Allah, I ask You of Your bounty.', ref:'Sahih Muslim 713' },
+  { id:'d16', title:'For Good in Both Worlds', cat:'Daily', arabic:'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً', trans:'Rabbana atina fid-dunya hasanatan wa fil-akhirati hasanatan wa qina adhaban-nar.', meaning:'Our Lord! Grant us good in this world and good in the hereafter, and save us from the Fire.', ref:'Quran 2:201' },
+  { id:'d17', title:'Sayyid al-Istighfar', cat:'Morning', arabic:'اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ خَلَقْتَنِي', trans:'Allahumma Anta Rabbi la ilaha illa Ant, khalaqtani wa ana abduk...', meaning:'O Allah, You are my Lord. There is none worthy of worship but You. You created me and I am Your slave.', ref:'Sahih Bukhari 6306 — Master of Istighfar' },
+  { id:'d18', title:'Protection from Evil Eye', cat:'Protection', arabic:'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّةِ مِنْ كُلِّ شَيْطَانٍ', trans:'A\'udhu bi-kalimatillahit-tammati min kulli shaytanin wa hammatin wa min kulli aynin lammah.', meaning:'I seek refuge in the perfect words of Allah from every devil, every poisonous creature, and every evil eye.', ref:'Sahih Bukhari 3371' },
+  { id:'d19', title:'Before a Journey', cat:'Travel', arabic:'اللَّهُمَّ إِنَّا نَسْأَلُكَ فِي سَفَرِنَا هَذَا الْبِرَّ وَالتَّقْوَى', trans:'Allahumma inna nas\'aluka fi safarina hadhal-birra wat-taqwa...', meaning:'O Allah, we ask You on this journey for goodness, piety, and deeds that please You.', ref:'Sahih Muslim 1342' },
+  { id:'d20', title:'For Parents', cat:'Daily', arabic:'رَّبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا', trans:'Rabbir-hamhuma kama rabbayani saghira.', meaning:'My Lord, have mercy upon them as they brought me up when I was small.', ref:'Quran 17:24' },
+  { id:'d21', title:'During Difficulty', cat:'Emotion', arabic:'لَا إِلَهَ إِلَّا اللَّهُ الْعَظِيمُ الْحَلِيمُ', trans:'La ilaha illallahul-Azimul-Halim, la ilaha illallahu Rabbul-arshil-azim...', meaning:'There is none worthy of worship but Allah, the Mighty, the Forbearing — Lord of the Magnificent Throne.', ref:'Sahih Bukhari 6346' },
+  { id:'d22', title:'For Knowledge', cat:'Daily', arabic:'رَّبِّ زِدْنِي عِلْمًا', trans:'Rabbi zidni ilma.', meaning:'My Lord, increase me in knowledge.', ref:'Quran 20:114' },
+  { id:'d23', title:'Istikhara Dua', cat:'Daily', arabic:'اللَّهُمَّ إِنِّي أَسْتَخِيرُكَ بِعِلْمِكَ', trans:'Allahumma inni astakhiruka bi\'ilmik, wa astaqdiruka bi-qudratik...', meaning:'O Allah, I seek Your guidance by virtue of Your knowledge and I seek ability by virtue of Your power.', ref:'Sahih Bukhari 6382' },
+  { id:'d24', title:'Waking at Night (Tahajjud)', cat:'Night', arabic:'اللَّهُمَّ لَكَ الْحَمْدُ أَنْتَ نُورُ السَّمَاوَاتِ وَالْأَرْضِ', trans:'Allahumma lakal-hamdu Anta nurus-samawati wal-ardi wa man fihinn.', meaning:'O Allah, to You belongs all praise. You are the Light of the heavens and the earth.', ref:'Sahih Bukhari 1120' }
+];
+
+/* ═══════════════════════════════════════
+   DATA — HADITHS
+═══════════════════════════════════════ */
+const HADITHS = [
+  { num:'Hadith 1', arabic:'إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ', text:'"Verily, deeds are judged by intentions, and every person will get what they intended. So whoever\'s migration was for Allah and His Messenger, his migration is for Allah and His Messenger."', source:'Sahih Bukhari 1, Sahih Muslim 1907' },
+  { num:'Hadith 2', arabic:'الدِّينُ النَّصِيحَةُ', text:'"The religion is sincere advice (nasihah)." The Companions asked: "To whom?" He replied: "To Allah, His Book, His Messenger, the leaders of the Muslims, and to their common folk."', source:'Sahih Muslim 55' },
+  { num:'Hadith 3', arabic:'مَنْ كَانَ يُؤْمِنُ بِاللَّهِ وَالْيَوْمِ الآخِرِ فَلْيَقُلْ خَيْرًا أَوْ لِيَصْمُتْ', text:'"Whoever believes in Allah and the Last Day should speak good or remain silent; and whoever believes in Allah and the Last Day should be generous to his neighbour; and whoever believes in Allah and the Last Day should be generous to his guest."', source:'Sahih Bukhari 6018, Sahih Muslim 47' },
+  { num:'Hadith 4', arabic:'لَا يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لِأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ', text:'"None of you truly believes until he loves for his brother what he loves for himself."', source:'Sahih Bukhari 13, Sahih Muslim 45' },
+  { num:'Hadith 5', arabic:'الرَّاحِمُونَ يَرْحَمُهُمُ الرَّحْمَنُ، ارْحَمُوا مَنْ فِي الأَرْضِ يَرْحَمْكُمْ مَنْ فِي السَّمَاءِ', text:'"The merciful are shown mercy by the Most Merciful. Be merciful to those on the earth and the One above the heavens will have mercy upon you."', source:'Sunan Abi Dawud 4941, Tirmidhi 1924' },
+  { num:'Hadith 6', arabic:'طَلَبُ الْعِلْمِ فَرِيضَةٌ عَلَى كُلِّ مُسْلِمٍ', text:'"Seeking knowledge is an obligation upon every Muslim."', source:'Sunan Ibn Majah 224 (Hasan)' },
+  { num:'Hadith 7', arabic:'أَقْرَبُ مَا يَكُونُ الْعَبْدُ مِنْ رَبِّهِ وَهُوَ سَاجِدٌ', text:'"The closest a servant comes to his Lord is when he is in prostration (sujud), so increase in supplication therein."', source:'Sahih Muslim 482' },
+  { num:'Hadith 8', arabic:'إِنَّ اللَّهَ لَا يَنْظُرُ إِلَى صُوَرِكُمْ وَأَمْوَالِكُمْ وَلَكِنْ يَنْظُرُ إِلَى قُلُوبِكُمْ وَأَعْمَالِكُمْ', text:'"Allah does not look at your forms or your wealth, but He looks at your hearts and your deeds."', source:'Sahih Muslim 2564' },
+  { num:'Hadith 9', arabic:'خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ', text:'"The best among you are those who learn the Quran and teach it."', source:'Sahih Bukhari 5027' },
+  { num:'Hadith 10', arabic:'تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ صَدَقَةٌ', text:'"Your smiling in the face of your brother is charity."', source:'Tirmidhi 1956' },
+  { num:'Hadith 11', arabic:'اتَّقِ اللَّهِ حَيْثُمَا كُنْتَ وَأَتْبِعِ السَّيِّئَةَ الْحَسَنَةَ تَمْحُهَا', text:'"Have taqwa of Allah wherever you are; follow an evil deed with a good one to erase it; and treat people with good character."', source:'Tirmidhi 1987 (Hasan Sahih)' },
+  { num:'Hadith 12', arabic:'مَنْ سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ', text:'"Whoever treads a path in seeking knowledge, Allah will make easy for him a path to Paradise."', source:'Sahih Muslim 2699' },
+  { num:'Hadith 13', arabic:'مَنْ صَلَّى عَلَيَّ وَاحِدَةً صَلَّى اللَّهُ عَلَيْهِ عَشْرًا', text:'"Whoever sends one blessing upon me, Allah will send ten blessings upon him."', source:'Sahih Muslim 408' },
+  { num:'Hadith 14', arabic:'الصَّلَاةُ عِمَادُ الدِّينِ', text:'"Prayer is the pillar of religion. Whoever establishes it has established the religion, and whoever demolishes it has demolished the religion."', source:'Bayhaqi, Shu\'ab al-Iman' },
+  { num:'Hadith 15', arabic:'الْمُسْلِمُ مَنْ سَلِمَ الْمُسْلِمُونَ مِنْ لِسَانِهِ وَيَدِهِ', text:'"The Muslim is the one from whose tongue and hand other Muslims are safe."', source:'Sahih Bukhari 10, Sahih Muslim 40' }
+];
+
+/* ═══════════════════════════════════════
+   DATA — ISLAMIC BATTLES
+═══════════════════════════════════════ */
+const BATTLES = [
+  {
+    name: 'Battle of Badr', year: '624 CE / 2 AH', outcome: 'victory',
+    arabic: 'غَزْوَةُ بَدْرٍ',
+    desc: 'The first major battle of Islam. 313 Muslims faced ~1,000 Meccans near the wells of Badr. Allah sent angels to assist. The Muslim army won decisively — killing 70 Quraysh leaders including Abu Jahl. Only 14 Muslims were martyred. This battle is called Yawm al-Furqan — the Day of Distinction.'
+  },
+  {
+    name: 'Battle of Uhud', year: '625 CE / 3 AH', outcome: 'setback',
+    arabic: 'غَزْوَةُ أُحُدٍ',
+    desc: 'Fought at the foot of Mount Uhud near Madinah. 700 Muslims faced 3,000 Meccans. Initially the Muslims were winning, but when some archers abandoned their posts against the Prophet\'s ﷺ orders, Khalid ibn al-Walid (then non-Muslim) flanked them. 70 Muslims were martyred including the Prophet\'s ﷺ uncle Hamza RA. The Prophet ﷺ himself was injured. This battle carried immense lessons in obedience.'
+  },
+  {
+    name: 'Battle of the Trench (Khandaq)', year: '627 CE / 5 AH', outcome: 'victory',
+    arabic: 'غَزْوَةُ الْخَنْدَقِ',
+    desc: 'Also called the Battle of the Confederates (Ahzab). A coalition of 10,000 enemies surrounded Madinah. On the suggestion of Salman al-Farsi RA, the Muslims dug a trench (khandaq) around Madinah. The siege lasted 27 days. A miraculous wind and internal disputes broke the enemy coalition. Allah defeated them without a full battle. Mentioned in Surah Al-Ahzab.'
+  },
+  {
+    name: 'Battle of Khaybar', year: '628 CE / 7 AH', outcome: 'victory',
+    arabic: 'غَزْوَةُ خَيْبَر',
+    desc: 'Fought against the Jewish fortress-city of Khaybar. The Prophet ﷺ gave the banner to Ali ibn Abi Talib RA, who was suffering from eye pain — the Prophet ﷺ miraculously healed him with his saliva. Ali RA uprooted a fortress gate and used it as a shield. The Muslims conquered Khaybar, and many provisions were obtained. The famous companion Ja\'far ibn Abi Talib RA participated.'
+  },
+  {
+    name: 'Conquest of Makkah (Fath Makkah)', year: '630 CE / 8 AH', outcome: 'victory',
+    arabic: 'فَتْحُ مَكَّةَ',
+    desc: 'The greatest triumph of early Islam. The Prophet ﷺ marched with 10,000 companions toward Makkah after the Quraysh broke the Treaty of Hudaybiyyah. Abu Sufyan embraced Islam on the eve of the conquest. The Prophet ﷺ entered Makkah peacefully, declared a general amnesty, and cleared the Ka\'bah of 360 idols. He ﷺ recited: "The Truth has come and falsehood has vanished." (Quran 17:81)'
+  },
+  {
+    name: 'Battle of Hunayn', year: '630 CE / 8 AH', outcome: 'victory',
+    arabic: 'غَزْوَةُ حُنَيْن',
+    desc: 'Shortly after the Conquest of Makkah, the Hawazin and Thaqif tribes attacked with 20,000 fighters. The Muslim army of 12,000 was initially surprised and began to retreat. The Prophet ﷺ stood firm calling: "I am the Prophet, no lie! I am the son of Abdul Muttalib!" His steadfastness rallied the Muslims. Allah sent tranquility and they overcame the enemy. Mentioned in Surah At-Tawbah (9:25–26).'
+  },
+  {
+    name: 'Battle of Tabuk', year: '630 CE / 9 AH', outcome: 'victory',
+    arabic: 'غَزْوَةُ تَبُوك',
+    desc: 'The last major expedition led by the Prophet ﷺ himself, against the Byzantine (Roman) Empire. Despite the extreme heat and hardship, the Muslim army of 30,000 marched to Tabuk. The Byzantines did not engage. Several border tribes accepted Islam and peace treaties. This expedition tested the faith of the hypocrites severely. The three companions left behind — Ka\'b ibn Malik, Murara ibn Rabi\', and Hilal ibn Umayyah — repented sincerely and were forgiven by Allah (Quran 9:118).'
+  },
+  {
+    name: 'Battle of Yarmouk', year: '636 CE / 15 AH', outcome: 'victory',
+    arabic: 'مَعْرَكَةُ الْيَرْمُوك',
+    desc: 'One of the most decisive battles in history, fought between the Muslim army under Khalid ibn al-Walid RA and the Byzantine Empire\'s 100,000+ soldiers. The Muslim force was approximately 25,000. Despite being vastly outnumbered, the Muslim cavalry\'s tactical genius — especially Khalid\'s mobile guard — shattered the Byzantine forces over six days. This battle opened the doors of Syria and the Levant to Islam.'
+  },
+  {
+    name: 'Battle of Qadisiyyah', year: '636 CE / 15 AH', outcome: 'victory',
+    arabic: 'مَعْرَكَةُ الْقَادِسِيَّة',
+    desc: 'The decisive battle against the Sasanian Persian Empire, led by Sa\'d ibn Abi Waqqas RA. The Muslim army of ~12,000 faced the Persian force of 100,000 along with war elephants. After 3–4 days of intense fighting, a sandstorm helped the Muslims overcome the elephants. The Persian commander Rustam was killed. This victory opened Iraq and Persia to Islam. Rustam had said: "We will never retreat" — but the Muslims never retreated either.'
+  },
+  {
+    name: 'Conquest of Jerusalem', year: '637–638 CE / 16 AH', outcome: 'victory',
+    arabic: 'فَتْحُ الْقُدْس',
+    desc: 'Caliph Umar ibn al-Khattab RA personally traveled to Jerusalem to accept its peaceful surrender from Patriarch Sophronius. In a remarkable show of justice, Umar RA refused to pray inside the Church of the Holy Sepulchre, fearing that Muslims would later claim it as a mosque. He prayed outside instead. He wrote the Covenant of Umar guaranteeing safety to all Christians and Jews — a landmark document of religious tolerance.'
+  },
+  {
+    name: 'Battle of Tours (Poitiers)', year: '732 CE / 114 AH', outcome: 'setback',
+    arabic: 'مَعْرَكَةُ بَلَاطِ الشُّهَدَاء',
+    desc: 'Fought in modern-day France between the Umayyad forces under Abd al-Rahman al-Ghafiqi and the Franks under Charles Martel. The Muslim advance into Western Europe was halted here. This battle marked the northernmost expansion of Muslim rule in Western Europe. After Abd al-Rahman was killed, the Muslim army withdrew. This is considered one of the decisive battles that shaped the religious map of Europe.'
+  },
+  {
+    name: 'Battle of Ain Jalut', year: '1260 CE / 658 AH', outcome: 'victory',
+    arabic: 'مَعْرَكَةُ عَيْنِ جَالُوت',
+    desc: 'Perhaps the most pivotal battle of the medieval era. The Mongol Empire, which had destroyed Baghdad and killed the Abbasid Caliph in 1258, seemed unstoppable. The Mamluk Sultan Qutuz and General Baybars met the Mongols near Ain Jalut (Spring of Goliath) in Palestine. Using brilliant tactics — feigned retreat followed by a flanking attack — the Mamluks delivered the Mongols their first decisive defeat. This battle saved Egypt and the Maghreb for Islam.'
+  },
+  {
+    name: 'Battle of Karbala',
+    year: '680 CE (61 AH)',
+    desc: 'A tragic and defining event in Islamic history. Imam Husayn ibn Ali (grandson of Prophet Muhammad ﷺ), along with his family and a small group of companions, was intercepted and besieged by the Umayyad army of Yazid I. Despite being denied water and vastly outnumbered, Husayn refused to pledge allegiance to Yazid, standing firm for justice and the principles of Islam. He and his companions were martyred on the day of Ashura, leaving a legacy of courage and sacrifice.'
+  }
+];
+
+/* ═══════════════════════════════════════
+   DATA — 99 NAMES OF ALLAH
+═══════════════════════════════════════ */
+const ALLAH_NAMES = [
+  {a:'الرَّحْمٰن',e:'The Most Gracious'},{a:'الرَّحِيم',e:'The Most Merciful'},{a:'الْمَلِك',e:'The King'},
+  {a:'الْقُدُّوس',e:'The Most Holy'},{a:'السَّلام',e:'The Peace'},{a:'الْمُؤْمِن',e:'The Faithful'},
+  {a:'الْمُهَيْمِن',e:'The Guardian'},{a:'الْعَزِيز',e:'The Almighty'},{a:'الْجَبَّار',e:'The Compeller'},
+  {a:'الْمُتَكَبِّر',e:'The Supreme'},{a:'الْخَالِق',e:'The Creator'},{a:'الْبَارِئ',e:'The Originator'},
+  {a:'الْمُصَوِّر',e:'The Shaper'},{a:'الْغَفَّار',e:'The Forgiving'},{a:'الْقَهَّار',e:'The Subduer'},
+  {a:'الْوَهَّاب',e:'The Bestower'},{a:'الرَّزَّاق',e:'The Provider'},{a:'الْفَتَّاح',e:'The Opener'},
+  {a:'الْعَلِيم',e:'The All-Knowing'},{a:'الْقَابِض',e:'The Withholder'},{a:'الْبَاسِط',e:'The Expander'},
+  {a:'الْخَافِض',e:'The Abaser'},{a:'الرَّافِع',e:'The Exalter'},{a:'الْمُعِز',e:'The Honourer'},
+  {a:'الْمُذِل',e:'The Dishonourer'},{a:'السَّمِيع',e:'The All-Hearing'},{a:'الْبَصِير',e:'The All-Seeing'},
+  {a:'الْحَكَم',e:'The Judge'},{a:'الْعَدْل',e:'The Just'},{a:'اللَّطِيف',e:'The Subtle'},
+  {a:'الْخَبِير',e:'The All-Aware'},{a:'الْحَلِيم',e:'The Forbearing'},{a:'الْعَظِيم',e:'The Magnificent'},
+  {a:'الْغَفُور',e:'The Forgiving'},{a:'الشَّكُور',e:'The Appreciative'},{a:'الْعَلِي',e:'The Most High'},
+  {a:'الْكَبِير',e:'The Most Great'},{a:'الْحَفِيظ',e:'The Preserver'},{a:'الْمُقِيت',e:'The Sustainer'},
+  {a:'الْحَسِيب',e:'The Reckoner'},{a:'الْجَلِيل',e:'The Majestic'},{a:'الْكَرِيم',e:'The Generous'},
+  {a:'الرَّقِيب',e:'The Watchful'},{a:'الْمُجِيب',e:'The Responsive'},{a:'الْوَاسِع',e:'The Vast'},
+  {a:'الْحَكِيم',e:'The Wise'},{a:'الْوَدُود',e:'The Loving'},{a:'الْمَجِيد',e:'The Glorious'},
+  {a:'الْبَاعِث',e:'The Resurrector'},{a:'الشَّهِيد',e:'The Witness'},{a:'الْحَق',e:'The Truth'},
+  {a:'الْوَكِيل',e:'The Trustee'},{a:'الْقَوِي',e:'The Strong'},{a:'الْمَتِين',e:'The Firm'},
+  {a:'الْوَلِي',e:'The Protecting Friend'},{a:'الْحَمِيد',e:'The Praiseworthy'},{a:'الْمُحْصِي',e:'The Accounter'},
+  {a:'الْمُبْدِئ',e:'The Originator'},{a:'الْمُعِيد',e:'The Restorer'},{a:'الْمُحْيِي',e:'The Giver of Life'},
+  {a:'الْمُمِيت',e:'The Bringer of Death'},{a:'الْحَي',e:'The Ever-Living'},{a:'الْقَيُّوم',e:'The Self-Subsisting'},
+  {a:'الْوَاجِد',e:'The Finder'},{a:'الْمَاجِد',e:'The Noble'},{a:'الْوَاحِد',e:'The Unique'},
+  {a:'الأَحَد',e:'The One'},{a:'الصَّمَد',e:'The Eternal'},{a:'الْقَادِر',e:'The Able'},
+  {a:'الْمُقْتَدِر',e:'The Powerful'},{a:'الْمُقَدِّم',e:'The Expediter'},{a:'الْمُؤَخِّر',e:'The Delayer'},
+  {a:'الأَوَّل',e:'The First'},{a:'الآخِر',e:'The Last'},{a:'الظَّاهِر',e:'The Manifest'},
+  {a:'الْبَاطِن',e:'The Hidden'},{a:'الْوَالِي',e:'The Governor'},{a:'الْمُتَعَالِي',e:'The Most Exalted'},
+  {a:'الْبَر',e:'The Source of Goodness'},{a:'التَّوَّاب',e:'The Acceptor of Repentance'},{a:'الْمُنْتَقِم',e:'The Avenger'},
+  {a:'الْعَفُو',e:'The Pardoner'},{a:'الرَّءُوف',e:'The Compassionate'},{a:'مَالِكُ الْمُلْكِ',e:'Master of the Kingdom'},
+  {a:'ذُو الْجَلَالِ وَالإِكْرَامِ',e:'Lord of Majesty and Bounty'},{a:'الْمُقْسِط',e:'The Equitable'},{a:'الْجَامِع',e:'The Gatherer'},
+  {a:'الْغَنِي',e:'The Self-Sufficient'},{a:'الْمُغْنِي',e:'The Enricher'},{a:'الْمَانِع',e:'The Withholder'},
+  {a:'الضَّار',e:'The Distresser'},{a:'النَّافِع',e:'The Propitious'},{a:'النُّور',e:'The Light'},
+  {a:'الْهَادِي',e:'The Guide'},{a:'الْبَدِيع',e:'The Incomparable'},{a:'الْبَاقِي',e:'The Everlasting'},
+  {a:'الْوَارِث',e:'The Inheritor'},{a:'الرَّشِيد',e:'The Guide to the Right Path'},{a:'الصَّبُور',e:'The Patient'}
+];
+
+/* ═══════════════════════════════════════
+   DATA — NAMES OF PROPHETS
+═══════════════════════════════════════ */
+const PROPHETS = [
+  {a:'آدَم',e:'Adam (AS)'},{a:'إِدْرِيس',e:'Idris (AS)'},{a:'نُوح',e:'Nuh / Noah (AS)'},
+  {a:'هُود',e:'Hud (AS)'},{a:'صَالِح',e:'Salih (AS)'},{a:'إِبْرَاهِيم',e:'Ibrahim / Abraham (AS)'},
+  {a:'لُوط',e:'Lut / Lot (AS)'},{a:'إِسْمَاعِيل',e:'Isma\'il / Ishmael (AS)'},{a:'إِسْحَاق',e:'Ishaq / Isaac (AS)'},
+  {a:'يَعْقُوب',e:'Ya\'qub / Jacob (AS)'},{a:'يُوسُف',e:'Yusuf / Joseph (AS)'},{a:'أَيُّوب',e:'Ayyub / Job (AS)'},
+  {a:'شُعَيْب',e:'Shu\'ayb / Jethro (AS)'},{a:'مُوسَى',e:'Musa / Moses (AS)'},{a:'هَارُون',e:'Harun / Aaron (AS)'},
+  {a:'ذُو الْكِفْل',e:'Dhul-Kifl / Ezekiel (AS)'},{a:'دَاوُد',e:'Dawud / David (AS)'},{a:'سُلَيْمَان',e:'Sulayman / Solomon (AS)'},
+  {a:'إِلْيَاس',e:'Ilyas / Elijah (AS)'},{a:'الْيَسَع',e:'Al-Yasa\' / Elisha (AS)'},{a:'يُونُس',e:'Yunus / Jonah (AS)'},
+  {a:'زَكَرِيَّا',e:'Zakariyya / Zechariah (AS)'},{a:'يَحْيَى',e:'Yahya / John (AS)'},{a:'عِيسَى',e:'\'Isa / Jesus (AS)'},
+  {a:'مُحَمَّد',e:'Muhammad ﷺ'}
+];
+
+
+/* ═══════════════════════════════════════
+   DATA — SEERAH (PROPHET MUHAMMAD ﷺ)
+═══════════════════════════════════════ */
+const SEERAH = [
+  {
+    title: 'The Year of the Elephant (Birth)',
+    desc: 'Prophet Muhammad ﷺ was born in Makkah in the Year of the Elephant (approx. 570 CE), the same year Abraha attempted to destroy the Ka\'bah with an army of elephants, but Allah sent flocks of birds to destroy them. He was orphaned early; his father Abdullah passed away before his birth, and his mother Aminah passed when he was six.'
+  },
+  {
+    title: 'Al-Sadiq Al-Amin (The Trustworthy)',
+    desc: 'Before prophethood, he was universally known in Makkah as Al-Sadiq (The Truthful) and Al-Amin (The Trustworthy). He worked as a shepherd and later as a merchant. His honesty impressed Khadijah RA, a noble businesswoman, who proposed marriage to him when he was 25 and she was 40.'
+  },
+  {
+    title: 'First Revelation (Iqra)',
+    desc: 'At age 40, while retreating in the Cave of Hira, the Angel Jibreel (Gabriel) came to him and commanded: "Read!" (Iqra). This marked the beginning of his prophethood. He returned home trembling to Khadijah RA, who comforted him and became the first person to accept Islam.'
+  },
+  {
+    title: 'The Year of Sorrow',
+    desc: 'In the 10th year of prophethood, his beloved wife Khadijah RA and his protecting uncle Abu Talib both passed away. This year brought immense grief, and the Quraysh intensified their persecution against the Muslims. Seeking support, he went to Ta\'if but was chased out and pelted with stones, yet he prayed for their guidance rather than their destruction.'
+  },
+  {
+    title: 'Al-Isra wal-Mi\'raj (The Night Journey)',
+    desc: 'Following the Year of Sorrow, Allah honored him with a miraculous journey. He traveled from Makkah to Jerusalem (Al-Isra) and then ascended through the seven heavens to the presence of Allah (Al-Mi\'raj). During this journey, the five daily prayers (Salah) were prescribed for the Ummah.'
+  },
+  {
+    title: 'Hijrah (Migration to Madinah)',
+    desc: 'After 13 years of hardship in Makkah, Allah commanded the Muslims to migrate to Yathrib (later named Madinah). The Prophet ﷺ and Abu Bakr RA narrowly escaped an assassination attempt, hiding in the Cave of Thawr. Their arrival in Madinah marked the beginning of the Islamic Calendar (Hijri).'
+  },
+  {
+    title: 'Treaty of Hudaybiyyah',
+    desc: 'In the 6th year after Hijrah, the Prophet ﷺ set out for Umrah but was blocked by the Quraysh. A peace treaty was signed at Hudaybiyyah. Though the terms seemed disadvantageous to Muslims initially, Allah called it a "clear victory" (Fathun Mubeen), as it led to massive growth of Islam during the period of peace.'
+  },
+  {
+    title: 'The Farewell Pilgrimage',
+    desc: 'In the 10th year after Hijrah, the Prophet ﷺ performed his first and only Hajj, accompanied by over 100,000 companions. He delivered his famous Farewell Sermon, establishing human equality, women\'s rights, and economic justice. Soon after, the verse completing the religion was revealed: "This day I have perfected for you your religion..." (Quran 5:3).'
+  }
+];
+let S = {
+  active: 'subhanallah',
+  counts: {},
+  custom: {},
+  totalCount: 0,
+  streak: 1,
+  sessions: 0,
+  sound: true,
+  vibrate: true,
+  todos: [
+    { id:'t1', title:'Pray 5 Daily Prayers (Salah)', done:false },
+    { id:'t2', title:'Read a page of Quran', done:false },
+    { id:'t3', title:'Read Surah Al-Mulk at night', done:false },
+    { id:'t4', title:'Give Sadaqah today', done:false },
+    { id:'t5', title:'Morning & Evening Adhkar', done:false },
+    { id:'t6', title:'Say Alhamdulillah 33 times', done:false },
+    { id:'t7', title:'Send Salawat on the Prophet ﷺ', done:false }
+  ],
+  todoDate: new Date().toDateString(),
+  weekData: [0,0,0,0,0,0,0]
+};
+try {
+  const old = JSON.parse(localStorage.getItem('sabr_v3') || '{}');
+  const current = JSON.parse(localStorage.getItem('alif_v1') || '{}');
+  Object.assign(S, old, current);
+} catch(e){}
+const save = () => localStorage.setItem('alif_v1', JSON.stringify(S));
+
+// Daily reset of todos
+if (S.todoDate !== new Date().toDateString()) {
+  if (S.todos) S.todos.forEach(t => t.done = false);
+  S.todoDate = new Date().toDateString();
+  // update weekly chart data
+  if (!S.weekData) S.weekData = [0,0,0,0,0,0,0];
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  S.weekData[todayIdx] = 0;
+  save();
+}
+
+/* ═══════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════ */
+function beep() {
+  if (!S.sound) return;
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(680, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + .08);
+    g.gain.setValueAtTime(.12, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .08);
+    o.start(); o.stop(ctx.currentTime + .08);
+  } catch(e){}
+}
+// renamed inner function to avoid conflict with global click
+function vibrateDevice() { if(S.vibrate && navigator.vibrate) navigator.vibrate(30); }
+
+/* ═══════════════════════════════════════
+   HISTORY API / ROUTING
+═══════════════════════════════════════ */
+let currentModal = null;
+let currentTab = 'counter';
+let sheetOpen = false;
+history.replaceState({ tab:'counter', modal:null, sheet:false }, "", "");
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  currentModal = id;
+  history.pushState({ tab:currentTab, modal:id, sheet:false }, "", "");
+}
+function closeModal(id) {
+  if (currentModal === id) history.back();
+  else document.getElementById(id).classList.remove('open');
+}
+function openSheet() {
+  document.getElementById('dhikr-sheet').classList.add('open');
+  sheetOpen = true;
+  renderSheet();
+  history.pushState({ tab:currentTab, modal:null, sheet:true }, "", "");
+}
+function closeSheet() {
+  if (sheetOpen) history.back();
+  else document.getElementById('dhikr-sheet').classList.remove('open');
+}
+window.addEventListener('popstate', e => {
+  const st = e.state || {};
+  // close sheet
+  if (sheetOpen && !st.sheet) {
+    document.getElementById('dhikr-sheet').classList.remove('open');
+    sheetOpen = false;
+  }
+  // close modal
+  if (currentModal && !st.modal) {
+    const el = document.getElementById(currentModal);
+    if (el) el.classList.remove('open');
+    currentModal = null;
+  }
+  // close dua detail
+  const dd = document.getElementById('dua-detail');
+  if (dd && dd.classList.contains('open') && !st.modal) {
+    dd.classList.remove('open');
+  }
+  if (st.tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(x => x.classList.remove('active'));
+    document.getElementById('tab-' + st.tab).classList.add('active');
+    const nb = document.querySelector(`.nav-btn[data-tab="${st.tab}"]`);
+    if (nb) nb.classList.add('active');
+    currentTab = st.tab;
+    if (currentTab === 'stats') { renderChart(); renderDhikrSummary(); renderTodos(); }
+    if (st.modal) { document.getElementById(st.modal).classList.add('open'); currentModal = st.modal; }
+  }
+});
+
+/* ═══════════════════════════════════════
+   COUNTER
+═══════════════════════════════════════ */
+const C_PERIM = 2 * Math.PI * 90;
+
+function getDhikr(id) {
+  if (S.edited && S.edited[id]) return S.edited[id];
+  if (DHIKR_DB[id]) return DHIKR_DB[id];
+  const c = S.custom[id];
+  return c ? { arabic:c.arabic||'ذِكْر', translit:c.translit||'', trans:c.trans||c.label, target:c.target } : DHIKR_DB.subhanallah;
+}
+
+function getLabel(id) {
+  const d = getDhikr(id);
+  const base = S.custom[id] ? (S.custom[id].label) : (id.charAt(0).toUpperCase()+id.slice(1).replace(/([A-Z])/g,' $1').trim());
+  return `${base} (${d.target})`;
+}
+
+function renderCounter() {
+  const d   = getDhikr(S.active);
+  const cnt = S.counts[S.active] || 0;
+  document.getElementById('arabic-disp').textContent  = d.arabic;
+  document.getElementById('translit-disp').textContent = d.translit || '';
+  document.getElementById('meaning-disp').textContent = d.trans;
+  document.getElementById('count-disp').textContent   = cnt;
+  document.getElementById('target-disp').textContent  = `/ ${d.target}`;
+  // Update picker button label
+  const pickerLabel = document.getElementById('picker-label');
+  if (pickerLabel) pickerLabel.textContent = getLabel(S.active);
+  const pct = Math.min(cnt / d.target, 1);
+  document.getElementById('ring-prog').style.strokeDashoffset = C_PERIM - pct * C_PERIM;
+  document.getElementById('s-total').textContent  = S.totalCount || 0;
+  document.getElementById('s-streak').textContent = S.streak || 1;
+  document.getElementById('s-sessions').textContent = S.sessions || 0;
+  save();
+}
+
+/* ═══════════════════════════════════════
+   DHIKR PICKER SHEET
+═══════════════════════════════════════ */
+function renderSheet() {
+  const body = document.getElementById('sheet-body');
+  body.innerHTML = '';
+  // built-ins
+  body.insertAdjacentHTML('beforeend', '<div class="sheet-section-lbl">Built-in Dhikr</div>');
+  Object.entries(DHIKR_DB).forEach(([id, d]) => {
+    body.appendChild(makeDhikrRow(id, d, false));
+  });
+  // custom
+  if (Object.keys(S.custom||{}).length) {
+    body.insertAdjacentHTML('beforeend', '<div class="sheet-section-lbl" style="margin-top:8px;">My Custom Dhikr</div>');
+    Object.entries(S.custom).forEach(([id, c]) => {
+      const d = { arabic:c.arabic||'ذِكْر', translit:c.translit||'', trans:c.trans||c.label, target:c.target };
+      body.appendChild(makeDhikrRow(id, d, true));
+    });
+  }
+}
+
+function makeDhikrRow(id, d, isCustom) {
+  const effD = (S.edited && S.edited[id]) ? S.edited[id] : d;
+  const el = document.createElement('div');
+  el.className = 'dhikr-row' + (S.active === id ? ' selected' : '');
+  el.dataset.id = id;
+  el.innerHTML = `
+    <div class="dhikr-row-info" onclick="selectDhikr('${id}')">
+      <div class="dhikr-row-arabic">${effD.arabic}</div>
+      <div class="dhikr-row-label">${effD.trans}</div>
+    </div>
+    <span class="dhikr-row-target" onclick="selectDhikr('${id}')">${effD.target}x</span>
+    <div class="dhikr-row-actions">
+      <button class="dhikr-action-btn" onclick="editDhikr('${id}')" title="Edit">
+        <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button>
+      ${isCustom ? `<button class="dhikr-action-btn dhikr-del-btn" onclick="deleteDhikr('${id}')" title="Delete">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </button>` : ''}
+    </div>`;
+  return el;
+}
+
+window.selectDhikr = function(id) {
+  S.active = id; save();
+  renderCounter();
+  closeSheet();
+};
+
+window.editDhikr = function(id) {
+  const d = getDhikr(id);
+  const label = S.custom[id] ? S.custom[id].label : id.charAt(0).toUpperCase()+id.slice(1);
+  document.getElementById('modal-add-title').textContent = 'Edit Dhikr';
+  document.getElementById('c-edit-id').value = id;
+  document.getElementById('c-title').value = label;
+  document.getElementById('c-arabic').value = d.arabic;
+  document.getElementById('c-translit').value = d.translit || '';
+  document.getElementById('c-trans').value = d.trans;
+  document.getElementById('c-target').value = d.target;
+  // open modal without closing sheet first
+  document.getElementById('modal-add').classList.add('open');
+  currentModal = 'modal-add';
+  history.pushState({ tab:currentTab, modal:'modal-add', sheet:true }, "", "");
+};
+
+window.deleteDhikr = function(id) {
+  if (!S.custom[id]) return;
+  if (confirm('Delete this dhikr?')) {
+    delete S.custom[id];
+    delete S.counts[id];
+    if (S.active === id) { S.active = 'subhanallah'; renderCounter(); }
+    save(); renderSheet();
+  }
+};
+
+document.getElementById('btn-open-sheet').addEventListener('click', openSheet);
+document.getElementById('btn-close-sheet').addEventListener('click', closeSheet);
+
+document.getElementById('tap-btn').addEventListener('click', () => {
+  if (!S.counts[S.active]) S.counts[S.active] = 0;
+  S.counts[S.active]++;
+  S.totalCount = (S.totalCount || 0) + 1;
+  // update sessions count when target reached
+  const d = getDhikr(S.active);
+  if (S.counts[S.active] === d.target) {
+    S.sessions = (S.sessions || 0) + 1;
+  }
+  // weekly data
+  if (!S.weekData) S.weekData = [0,0,0,0,0,0,0];
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  S.weekData[todayIdx] = (S.weekData[todayIdx] || 0) + 1;
+  beep(); vibrateDevice();
+  renderCounter();
+});
+
+document.getElementById('btn-undo').addEventListener('click', () => {
+  if ((S.counts[S.active]||0) > 0) {
+    S.counts[S.active]--;
+    S.totalCount = Math.max((S.totalCount||0)-1, 0);
+    renderCounter();
+  }
+});
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (confirm('Reset this counter?')) { S.counts[S.active] = 0; renderCounter(); }
+});
+
+/* ═══════════════════════════════════════
+   ADD / EDIT DHIKR MODAL
+═══════════════════════════════════════ */
+document.getElementById('btn-open-add').addEventListener('click', () => {
+  // open as new
+  document.getElementById('modal-add-title').textContent = 'Add Dhikr';
+  document.getElementById('c-edit-id').value = '';
+  document.getElementById('c-title').value = '';
+  document.getElementById('c-arabic').value = '';
+  document.getElementById('c-translit').value = '';
+  document.getElementById('c-trans').value = '';
+  document.getElementById('c-target').value = '33';
+  openModal('modal-add');
+});
+document.getElementById('btn-cancel-add').addEventListener('click', () => closeModal('modal-add'));
+document.getElementById('btn-save-add').addEventListener('click', () => {
+  const label  = document.getElementById('c-title').value.trim();
+  if (!label) { alert('Please enter a title'); return; }
+  const arabic = document.getElementById('c-arabic').value.trim();
+  const translit = document.getElementById('c-translit').value.trim();
+  const trans  = document.getElementById('c-trans').value.trim();
+  const target = Math.max(parseInt(document.getElementById('c-target').value)||33, 1);
+  const editId = document.getElementById('c-edit-id').value;
+
+  if (editId) {
+    // editing existing
+    if (DHIKR_DB[editId]) {
+      // store override
+      if (!S.edited) S.edited = {};
+      S.edited[editId] = { arabic, translit, trans, target };
+    } else if (S.custom[editId]) {
+      S.custom[editId] = { ...S.custom[editId], label, arabic, translit, trans, target };
+    }
+    if (S.active === editId) renderCounter();
+    save();
+    closeModal('modal-add');
+    // if sheet is still behind, re-render it
+    setTimeout(() => renderSheet(), 50);
+  } else {
+    // new custom dhikr
+    const id = 'cu_' + Date.now();
+    S.custom[id] = { label, arabic, translit, trans, target };
+    S.counts[id] = 0;
+    S.active = id;
+    save();
+    closeModal('modal-add');
+    renderCounter();
+  }
+});
+
+/* ═══════════════════════════════════════
+   DUAS
+═══════════════════════════════════════ */
+let duaFilter = 'All', duaSearch = '';
+if (!S.customDuas) S.customDuas = [];
+
+function allDuas() {
+  return [...DUAS, ...(S.customDuas || []).map(d => ({ ...d, cat: 'My Duas' }))];
+}
+
+function renderDuas() {
+  const q = duaSearch.toLowerCase();
+  const list = document.getElementById('duas-list');
+  list.innerHTML = '';
+  const pool = allDuas();
+  const filtered = pool.filter(d => {
+    const catOk = duaFilter === 'All' || d.cat === duaFilter;
+    const searchOk = !q || d.title.toLowerCase().includes(q) || (d.meaning||'').toLowerCase().includes(q);
+    return catOk && searchOk;
+  });
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:13px;">No duas found</div>';
+    return;
+  }
+  filtered.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'dua-item';
+    const isCustom = !!(S.customDuas||[]).find(x => x.id === d.id);
+    el.innerHTML = `
+      <div class="dua-item-top">
+        <span class="dua-item-title">${d.title}</span>
+        <div style="display:flex;gap:5px;align-items:center;flex-shrink:0;">
+          <span class="dua-cat-badge">${d.cat}</span>
+          ${isCustom ? `<button onclick="event.stopPropagation();editDua('${d.id}')" style="background:none;border:none;padding:2px;cursor:pointer;color:var(--text-muted);">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button onclick="event.stopPropagation();deleteDua('${d.id}')" style="background:none;border:none;padding:2px;cursor:pointer;color:var(--red);">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>` : ''}
+        </div>
+      </div>
+      <div class="dua-item-preview">${(d.meaning||'').slice(0,80)}…</div>`;
+    el.onclick = () => openDua(d);
+    list.appendChild(el);
+  });
+}
+
+window.editDua = function(id) {
+  const d = (S.customDuas||[]).find(x => x.id === id);
+  if (!d) return;
+  document.getElementById('modal-dua-title').textContent = 'Edit Dua';
+  document.getElementById('cd-edit-id').value = id;
+  document.getElementById('cd-title').value = d.title||'';
+  document.getElementById('cd-arabic').value = d.arabic||'';
+  document.getElementById('cd-trans').value = d.trans||'';
+  document.getElementById('cd-meaning').value = d.meaning||'';
+  document.getElementById('cd-ref').value = d.ref||'';
+  openModal('modal-add-dua');
+};
+
+window.deleteDua = function(id) {
+  if (confirm('Delete this dua?')) {
+    S.customDuas = (S.customDuas||[]).filter(x => x.id !== id);
+    save(); renderDuas();
+  }
+};
+
+// Add / Edit Dua modal
+document.getElementById('btn-open-add-dua').addEventListener('click', () => {
+  document.getElementById('modal-dua-title').textContent = 'Add Custom Dua';
+  document.getElementById('cd-edit-id').value = '';
+  ['cd-title','cd-arabic','cd-trans','cd-meaning','cd-ref'].forEach(x => document.getElementById(x).value = '');
+  openModal('modal-add-dua');
+});
+document.getElementById('btn-cancel-add-dua').addEventListener('click', () => closeModal('modal-add-dua'));
+document.getElementById('btn-save-add-dua').addEventListener('click', () => {
+  const title   = document.getElementById('cd-title').value.trim();
+  const meaning = document.getElementById('cd-meaning').value.trim();
+  if (!title || !meaning) { alert('Title and Meaning are required'); return; }
+  const arabic  = document.getElementById('cd-arabic').value.trim();
+  const trans   = document.getElementById('cd-trans').value.trim();
+  const ref     = document.getElementById('cd-ref').value.trim();
+  const editId  = document.getElementById('cd-edit-id').value;
+  if (!S.customDuas) S.customDuas = [];
+  if (editId) {
+    const idx = S.customDuas.findIndex(x => x.id === editId);
+    if (idx !== -1) S.customDuas[idx] = { id:editId, title, arabic, trans, meaning, ref };
+  } else {
+    S.customDuas.push({ id:'cd_'+Date.now(), title, arabic, trans, meaning, ref });
+  }
+  save(); renderDuas(); closeModal('modal-add-dua');
+});
+
+function openDua(d) {
+  document.getElementById('dd-title').textContent   = d.title;
+  document.getElementById('dd-cat').textContent     = d.cat;
+  document.getElementById('dd-arabic').textContent  = d.arabic;
+  document.getElementById('dd-trans').textContent   = d.trans;
+  document.getElementById('dd-meaning').textContent = d.meaning;
+  document.getElementById('dd-ref').textContent     = d.ref;
+  openModal('dua-detail');
+}
+document.getElementById('dua-back').addEventListener('click', () => closeModal('dua-detail'));
+document.getElementById('dua-search').addEventListener('input', e => { duaSearch = e.target.value; renderDuas(); });
+document.querySelectorAll('.chip').forEach(c => {
+  c.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+    c.classList.add('active'); duaFilter = c.dataset.cat; renderDuas();
+  });
+});
+
+document.querySelectorAll('.htab-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.htab-btn').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.hpane').forEach(p => p.classList.remove('active'));
+    b.classList.add('active');
+    const pane = document.getElementById('pane-' + b.dataset.htab);
+    if (pane) pane.classList.add('active');
+  });
+});
+
+/* ═══════════════════════════════════════
+   HADITHS
+═══════════════════════════════════════ */
+function renderHadiths() {
+  const pane = document.getElementById('pane-hadiths');
+  pane.innerHTML = '';
+  HADITHS.forEach(h => {
+    const el = document.createElement('div');
+    el.className = 'hadith-card';
+    el.innerHTML = `
+      <div class="hadith-num">${h.num}</div>
+      <div class="hadith-arabic">${h.arabic}</div>
+      <div class="hadith-text">${h.text}</div>
+      <div class="hadith-source">${h.source}</div>`;
+    pane.appendChild(el);
+  });
+}
+
+/* ═══════════════════════════════════════
+   ISLAMIC BATTLES
+═══════════════════════════════════════ */
+function renderBattles() {
+  const pane = document.getElementById('pane-battles');
+  pane.innerHTML = '';
+  BATTLES.forEach((b, i) => {
+    const outcomeClass = b.outcome === 'victory' ? 'outcome-v' : b.outcome === 'setback' ? 'outcome-d' : 'outcome-i';
+    const outcomeIcon  = b.outcome === 'victory'
+      ? '<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg> Victory'
+      : b.outcome === 'setback'
+      ? '<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><path d="M14.5 10c-.83 0-1.5-.67-1.5-1.5v-5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5z"/><path d="M20.5 10H19V8.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/><path d="M9.5 14.5c.83 0 1.5.67 1.5 1.5v5c0 .83-.67 1.5-1.5 1.5S8 21.83 8 21v-5c0-.83.67-1.5 1.5-1.5z"/><path d="M3.5 14.5H5V16c0 .83-.67 1.5-1.5 1.5S2 16.83 2 16s.67-1.5 1.5-1.5z"/><path d="M9 9H4a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5"/></svg> Setback'
+      : '<svg viewBox="0 0 24 24" style="width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Stalemate';
+    const el = document.createElement('div');
+    el.className = 'battle-card';
+    el.innerHTML = `
+      <div class="battle-header" onclick="toggleBattle(this.parentElement)">
+        <div class="battle-title-wrap">
+          <div class="battle-name">${b.name}</div>
+          <div class="battle-year">${b.year}</div>
+        </div>
+        <svg class="battle-chevron" viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--text-muted);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;transition:transform .2s;"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="battle-body">
+        <div class="battle-arabic">${b.arabic}</div>
+        <div class="battle-desc">${b.desc}</div>
+        <span class="battle-outcome ${outcomeClass}">${outcomeIcon}</span>
+      </div>`;
+    pane.appendChild(el);
+  });
+}
+window.toggleBattle = function(el) {
+  el.classList.toggle('open');
+  const chev = el.querySelector('.battle-chevron');
+  if (chev) chev.style.transform = el.classList.contains('open') ? 'rotate(90deg)' : '';
+};
+
+/* ═══════════════════════════════════════
+   NAMES OF ALLAH
+═══════════════════════════════════════ */
+function renderNames() {
+  const grid = document.getElementById('names-grid');
+  grid.innerHTML = '';
+  ALLAH_NAMES.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'name-card';
+    el.innerHTML = `<div class="name-arabic">${n.a}</div><div class="name-english">${n.e}</div>`;
+    grid.appendChild(el);
+  });
+}
+
+function renderProphets() {
+  const grid = document.getElementById('prophets-grid');
+  grid.innerHTML = '';
+  PROPHETS.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'name-card';
+    el.style.borderColor = 'var(--primary)';
+    el.innerHTML = `<div class="name-arabic" style="color:var(--accent);">${n.a}</div><div class="name-english">${n.e}</div>`;
+    grid.appendChild(el);
+  });
+}
+
+function renderSeerah() {
+  const pane = document.getElementById('pane-seerah');
+  pane.innerHTML = '';
+  SEERAH.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'battle-card';
+    el.innerHTML = `
+      <div class="battle-header" onclick="toggleBattle(this.parentElement)">
+        <div class="battle-title-wrap">
+          <div class="battle-name">${s.title}</div>
+          <div class="battle-year" style="color:var(--primary-light);background:rgba(23,133,89,.15);">Chapter ${i+1}</div>
+        </div>
+        <svg class="battle-chevron" viewBox="0 0 24 24" style="width:18px;height:18px;stroke:var(--text-muted);fill:none;stroke-width:2;stroke-linecap:round;flex-shrink:0;transition:transform .2s;"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="battle-body">
+        <div class="battle-desc" style="padding-top:10px;border-top:1px solid var(--border);">${s.desc}</div>
+      </div>`;
+    pane.appendChild(el);
+  });
+}
+
+
+/* ═══════════════════════════════════════
+   HADITH TABS
+═══════════════════════════════════════ */
+document.querySelectorAll('.htab-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.htab-btn').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.hpane').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById('pane-' + b.dataset.htab).classList.add('active');
+  });
+});
+
+/* ═══════════════════════════════════════
+   TODO LIST
+═══════════════════════════════════════ */
+function renderTodos() {
+  const list = document.getElementById('todo-list');
+  list.innerHTML = '';
+  const todos = S.todos || [];
+  if (todos.length === 0) {
+    list.innerHTML = '<div style="padding:14px;text-align:center;color:var(--text-muted);font-size:12px;">No goals yet. Tap + Add to create one.</div>';
+    return;
+  }
+  todos.forEach((t, i) => {
+    const el = document.createElement('div');
+    el.className = 'todo-item' + (t.done ? ' done' : '');
+    el.innerHTML = `
+      <div class="todo-item-left" onclick="toggleTodo(${i})">
+        <div class="todo-check"></div>
+        <div class="todo-text">${t.title}</div>
+      </div>
+      <button class="todo-del" onclick="delTodo(${i})">
+        <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>`;
+    list.appendChild(el);
+  });
+  const done = todos.filter(t => t.done).length;
+  document.getElementById('s-done-todos').textContent = done;
+}
+window.toggleTodo = i => {
+  S.todos[i].done = !S.todos[i].done;
+  save(); renderTodos();
+  if (S.todos[i].done) beep();
+};
+window.delTodo = i => {
+  if (confirm('Delete this goal?')) { S.todos.splice(i, 1); save(); renderTodos(); }
+};
+document.getElementById('btn-add-todo').addEventListener('click', () => openModal('modal-todo'));
+document.getElementById('btn-cancel-todo').addEventListener('click', () => closeModal('modal-todo'));
+document.getElementById('btn-save-todo').addEventListener('click', () => {
+  const val = document.getElementById('t-title').value.trim();
+  if (!val) { alert('Enter a title'); return; }
+  if (!S.todos) S.todos = [];
+  S.todos.push({ id:'t_'+Date.now(), title:val, done:false });
+  save(); renderTodos();
+  closeModal('modal-todo');
+  document.getElementById('t-title').value = '';
+});
+
+/* ═══════════════════════════════════════
+   STATS
+═══════════════════════════════════════ */
+function renderChart() {
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const chart = document.getElementById('week-chart');
+  chart.innerHTML = '';
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  const data = S.weekData || [0,0,0,0,0,0,0];
+  const maxVal = Math.max(...data, 1);
+  days.forEach((day, i) => {
+    const h = Math.round((data[i] / maxVal) * 90) + 4;
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    col.innerHTML = `
+      <div class="bar${i===todayIdx?' today':''}" style="height:${h}px" id="${i===todayIdx?'bar-today':''}"></div>
+      <span class="bar-lbl">${day[0]}</span>`;
+    chart.appendChild(col);
+  });
+}
+
+function renderDhikrSummary() {
+  const wrap = document.getElementById('dhikr-summary');
+  wrap.innerHTML = '';
+  const allKeys = [...Object.keys(DHIKR_DB), ...Object.keys(S.custom||{})];
+  allKeys.forEach(id => {
+    const cnt = S.counts[id] || 0;
+    if (cnt === 0) return;
+    const d = getDhikr(id);
+    const name = DHIKR_DB[id] ? id.charAt(0).toUpperCase()+id.slice(1) : (S.custom[id]?.label || id);
+    const el = document.createElement('div');
+    el.className = 'ds-item';
+    el.innerHTML = `<div class="ds-name">${name}</div><div class="ds-val">${cnt}</div>`;
+    wrap.appendChild(el);
+  });
+  if (wrap.innerHTML === '') {
+    wrap.innerHTML = '<div style="grid-column:span 2;text-align:center;color:var(--text-muted);font-size:12px;padding:10px;">No counts yet. Start reciting!</div>';
+  }
+}
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+document.querySelectorAll('.nav-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    if (currentTab === b.dataset.tab) return;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(x => x.classList.remove('active'));
+    document.getElementById('tab-' + b.dataset.tab).classList.add('active');
+    b.classList.add('active');
+    currentTab = b.dataset.tab;
+    history.pushState({ tab:currentTab, modal:null }, "", "");
+    document.querySelector('.main-scroll-area').scrollTop = 0;
+    if (currentTab === 'stats') { renderChart(); renderDhikrSummary(); renderTodos(); }
+  });
+});
+
+/* ═══════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════ */
+document.getElementById('set-sound').addEventListener('change', e => { S.sound = e.target.checked; save(); });
+document.getElementById('set-vibrate').addEventListener('change', e => { S.vibrate = e.target.checked; save(); });
+document.getElementById('btn-clear-data').addEventListener('click', () => {
+  if (confirm('Delete all data and reset?')) { localStorage.clear(); location.reload(); }
+});
+document.getElementById('set-sound').checked   = S.sound;
+document.getElementById('set-vibrate').checked = S.vibrate;
+
+/* ═══════════════════════════════════════
+   PWA INSTALL BANNER
+═══════════════════════════════════════ */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem('banner_dismissed')) {
+    document.getElementById('install-banner').classList.remove('hidden');
+  }
+});
+function triggerInstall() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r => {
+      if (r.outcome === 'accepted') {
+        document.getElementById('install-banner').classList.add('hidden');
+        localStorage.setItem('banner_dismissed','1');
+      }
+      deferredPrompt = null;
+    });
+  } else {
+    alert('Open in Chrome/Edge on Android and tap "Add to Home Screen", or use Share on iOS Safari.');
+  }
+}
+document.getElementById('btn-banner-install').addEventListener('click', triggerInstall);
+document.getElementById('btn-settings-install').addEventListener('click', triggerInstall);
+document.getElementById('btn-banner-close').addEventListener('click', () => {
+  document.getElementById('install-banner').classList.add('hidden');
+  localStorage.setItem('banner_dismissed','1');
+});
+if (window.matchMedia('(display-mode: standalone)').matches || localStorage.getItem('banner_dismissed')) {
+  document.getElementById('install-banner').classList.add('hidden');
+}
+
+// Clean up legacy custom dhikr restore (removed to prevent crash)
+
+/* ═══════════════════════════════════════
+   INIT
+═══════════════════════════════════════ */
+renderCounter();
+renderDuas();
+renderHadiths();
+renderBattles();
+renderNames();
+renderProphets();
+renderSeerah();
+renderTodos();
+renderChart();
+renderDhikrSummary();
+
+/* ═══════════════════════════════════════
+   SERVICE WORKER REGISTRATION
+═══════════════════════════════════════ */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('[SW] Registered:', reg.scope))
+      .catch(err => console.log('[SW] Registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>

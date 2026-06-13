@@ -1,0 +1,27 @@
+# Flutter / Dart (not needed for web deployment)
+lib/
+test/
+pubspec.yaml
+pubspec.lock
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+.packages
+
+# Old Flutter web folder (sw.js moved to root)
+web/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
