@@ -11,6 +11,7 @@
   <link rel="manifest" href="./manifest.json">
   <title>Alif Tasbih</title>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/adhan@4.3.3/lib/adhan.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
   <style>
     /* ══ THEME TOKENS ══ */
@@ -574,6 +575,110 @@
     .color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s, border-color 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
     .color-swatch:active { transform: scale(0.9); }
     .color-swatch.active { border-color: var(--primary-light); transform: scale(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+
+    /* ══ REMINDERS TAB ══ */
+    .reminder-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 15px;
+      margin-bottom: 12px;
+      transition: background .2s;
+    }
+    .reminder-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .reminder-title { font-weight: 600; font-size: 15px; color: var(--text); }
+    .reminder-time {
+      font-size: 13px;
+      color: var(--primary-light);
+      font-family: monospace;
+      background: var(--accent-dim);
+      background: rgba(23,133,89,.12);
+      padding: 4px 9px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .reminder-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.45; }
+    .reminder-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      padding-top: 11px;
+    }
+    .reminder-label { font-size: 12px; color: var(--text-muted); }
+    .reminder-edit-btn {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-light);
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 8px;
+      transition: background .15s;
+    }
+    .reminder-edit-btn:hover { background: var(--card2); }
+
+    /* Stats hero box */
+    .reminder-stats-box {
+      background: linear-gradient(135deg, var(--primary-light), var(--primary));
+      border-radius: 16px;
+      padding: 20px 16px;
+      color: #fff;
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: 0 6px 24px rgba(13,82,56,.35);
+    }
+    .reminder-stats-box .stat-label { font-size: 12px; opacity: 0.75; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .reminder-stats-box .stat-time { font-size: 30px; font-weight: 800; font-family: var(--font-h); margin-bottom: 2px; letter-spacing: 1px; }
+    .reminder-stats-box .stat-name { font-size: 13px; opacity: 0.85; }
+
+    /* Permission warning banner */
+    .perm-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--red-dim);
+      border: 1px solid var(--red);
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      margin-bottom: 14px;
+      color: var(--red);
+      font-size: 14px;
+      font-weight: 600;
+      transition: background .15s;
+    }
+    .perm-banner:hover { background: rgba(192,57,43,.22); }
+    .perm-banner svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; flex-shrink: 0; }
+
+    /* Toggle switch */
+    .toggle-switch { position: relative; width: 44px; height: 24px; display: inline-block; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--border2);
+      border: 1.5px solid var(--border);
+      transition: .2s; border-radius: 24px;
+    }
+    .toggle-slider:before {
+      position: absolute; content: ""; height: 18px; width: 18px; left: 2px; bottom: 1px;
+      background: var(--text-muted); transition: .2s; border-radius: 50%;
+    }
+    input:checked + .toggle-slider { background: var(--primary-light); border-color: var(--primary-light); }
+    input:checked + .toggle-slider:before { transform: translateX(20px); background: #fff; }
+
+    /* FAB */
+    .fab-btn {
+      position: fixed; bottom: 90px; right: 20px;
+      width: 54px; height: 54px;
+      background: linear-gradient(135deg, var(--primary-light), var(--primary));
+      color: #fff; border-radius: 50%;
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 4px 16px rgba(23,133,89,0.45);
+      cursor: pointer; z-index: 100;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .fab-btn:active { transform: scale(0.9); box-shadow: 0 2px 8px rgba(23,133,89,0.3); }
+
 </style>
 </head>
 <body>
@@ -848,6 +953,34 @@
     </div>
   </div>
 
+    <!-- ═══════════════════════════════════════ -->
+    <!-- REMINDERS TAB                           -->
+    <!-- ═══════════════════════════════════════ -->
+    <div id="tab-reminders" class="tab">
+      <div class="settings-section-title">Reminder System</div>
+
+      <!-- Hero stats box -->
+      <div class="reminder-stats-box" id="reminders-stats">
+        <div class="stat-label">Next Reminder</div>
+        <div class="stat-time" id="next-reminder-time">--:--</div>
+        <div class="stat-name" id="next-reminder-title">No active reminders</div>
+      </div>
+
+      <!-- Permission warning -->
+      <div class="perm-banner" id="perm-banner" onclick="requestNotificationPermission()">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Notifications blocked — tap to enable
+      </div>
+
+      <!-- List -->
+      <div id="reminders-list"></div>
+
+      <!-- FAB: add reminder -->
+      <div class="fab-btn" onclick="openReminderModal()" id="btn-add-reminder">
+        <svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+    </div>
+
   <!-- ══ SETTINGS ══ -->
   <div id="tab-settings" class="tab">
     <div class="settings-section">
@@ -999,6 +1132,43 @@
 
   </div> <!-- /main-scroll-area -->
 
+  
+  <!-- CUSTOM PROMPT MODAL -->
+  <div class="modal-bg" id="modal-custom-prompt" onclick="if(event.target===this)closeModal('modal-custom-prompt')">
+    <div class="modal" style="width: 320px; max-width: 90%; text-align: center;">
+      <h3 id="prompt-title" style="margin-bottom: 12px;">Alert</h3>
+      <div id="prompt-msg" style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;"></div>
+      <div class="modal-row">
+        <button class="btn btn-outline" id="btn-prompt-cancel" style="display:none;">Cancel</button>
+        <button class="btn btn-primary" id="btn-prompt-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REMINDER MODAL -->
+  <div class="modal-bg" id="modal-reminder" onclick="if(event.target===this)closeReminderModal()">
+    <div class="modal" style="width: 320px; max-width: 90%;">
+      <h3 id="rem-modal-title">Custom Reminder</h3>
+      <input type="hidden" id="rem-id">
+      <div>
+        <div class="form-lbl">Reminder Title</div>
+        <input class="inp" type="text" id="rem-title" placeholder="e.g. Asr Adhkar">
+      </div>
+      <div>
+        <div class="form-lbl">Message / Dua</div>
+        <input class="inp" type="text" id="rem-msg" placeholder="Message to display">
+      </div>
+      <div>
+        <div class="form-lbl">Time</div>
+        <input class="inp" type="time" id="rem-time" style="font-family:monospace;">
+      </div>
+      <div class="modal-row">
+        <button class="btn" onclick="closeReminderModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveCustomReminder()">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- NAV -->
   <nav>
     <button class="nav-btn active" data-tab="counter">
@@ -1017,6 +1187,13 @@
       <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       <span>Stats</span>
     </button>
+    
+  
+      
+        <button class="nav-btn" data-tab="reminders">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        <span>Reminders</span>
+      </button>
     <button class="nav-btn" data-tab="settings">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       <span>Settings</span>
@@ -1046,8 +1223,8 @@ const DUAS = [
   { id:'d02', title:'Entering the Evening', cat:'Evening', arabic:'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ وَالْحَمْدُ لِلَّهِ', trans:'Amsayna wa amsal-mulku lillah walhamdu lillah...', meaning:'We have entered the evening and all sovereignty belongs to Allah.', ref:'Sahih Muslim 2723' },
   { id:'d03', title:'Morning Protection', cat:'Morning', arabic:'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ', trans:'Bismillahil-ladhi la yadurru ma\'a ismihi shay\'un fil-ardi wa la fis-sama\'i.', meaning:'In the Name of Allah with Whose name nothing is harmed on earth nor in the heavens.', ref:'Sunan Abi Dawud 5088' },
   { id:'d04', title:'Ayat al-Kursi', cat:'Morning', arabic:'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ', trans:'Allahu la ilaha illa Huwal-Hayyul-Qayyum...', meaning:'Allah — there is no deity except Him, the Ever-Living, the Sustainer of existence.', ref:'Quran 2:255' },
-  { id:'d05', title:'Before Sleeping', cat:'Night', arabic:'بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا', trans:'Bismika Allahumma amutu wa ahya.', meaning:'In Your name, O Allah, I die and I live.', ref:'Sahih Bukhari 6324' },
-  { id:'d06', title:'When Waking Up', cat:'Night', arabic:'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا', trans:'Alhamdu lillahil-ladhi ahyana ba\'da ma amatana wa ilayhin-nushur.', meaning:'Praise is to Allah Who gives us life after He has caused us to die.', ref:'Sahih Bukhari 6312' },
+  { id:'d05', title:'Before Sleeping', cat:'Night', arabic:'اللَّهُمَّ بِاسْمِكَ أَمُوتُ وَأَحْيَا', trans:'Allahumma bismika amutu wa ahya.', meaning:'O Allah, in Your name I die and I live.', ref:'Sahih Bukhari 6324' },
+  { id:'d06', title:'When Waking Up', cat:'Morning', arabic:'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا', trans:'Alhamdu lillahil-ladhi ahyana ba\'da ma amatana wa ilayhin-nushur.', meaning:'Praise is to Allah Who gives us life after He has caused us to die.', ref:'Sahih Bukhari 6312' },
   { id:'d07', title:'Dua for Anxiety & Grief', cat:'Emotion', arabic:'اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ', trans:'Allahumma inni a\'udhu bika minal-hammi wal-hazan...', meaning:'O Allah, I seek refuge in You from worry and grief, helplessness and laziness.', ref:'Sahih Bukhari 6369' },
   { id:'d08', title:'Dua of Yunus AS', cat:'Emotion', arabic:'لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ', trans:'La ilaha illa Anta subhanaka inni kuntu minaz-zalimin.', meaning:'There is none worthy of worship except You, glory be to You, certainly I was among the wrongdoers.', ref:'Quran 21:87 — Tirmidhi 3505' },
   { id:'d09', title:'Evening Protection', cat:'Evening', arabic:'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ', trans:'A\'udhu bi-kalimatillahit-tammati min sharri ma khalaqa.', meaning:'I seek refuge in the perfect words of Allah from the evil of what He has created.', ref:'Sahih Muslim 2709' },
@@ -1496,12 +1673,11 @@ window.editDhikr = function(id) {
 
 window.deleteDhikr = function(id) {
   if (!S.custom[id]) return;
-  if (confirm('Delete this dhikr?')) {
-    delete S.custom[id];
+  appConfirm('Delete this dhikr?', (res) => { if(res) { delete S.custom[id];
     delete S.counts[id];
     if (S.active === id) { S.active = 'subhanallah'; renderCounter(); }
     save(); renderSheet();
-  }
+  } });
 };
 
 document.getElementById('btn-open-sheet').addEventListener('click', openSheet);
@@ -1572,7 +1748,7 @@ document.getElementById('btn-undo').addEventListener('click', () => {
   }
 });
 document.getElementById('btn-reset').addEventListener('click', () => {
-  if (confirm('Reset this counter?')) { S.counts[S.active] = 0; renderCounter(); }
+  appConfirm('Reset this counter?', (res) => { if(res) { S.counts[S.active] = 0; renderCounter(); } });
 });
 
 /* ═══════════════════════════════════════
@@ -1592,7 +1768,7 @@ document.getElementById('btn-open-add').addEventListener('click', () => {
 document.getElementById('btn-cancel-add').addEventListener('click', () => closeModal('modal-add'));
 document.getElementById('btn-save-add').addEventListener('click', () => {
   const label  = document.getElementById('c-title').value.trim();
-  if (!label) { alert('Please enter a title'); return; }
+  if (!label) { appAlert('Please enter a title', 'Required'); return; }
   const arabic = document.getElementById('c-arabic').value.trim();
   const translit = document.getElementById('c-translit').value.trim();
   const trans  = document.getElementById('c-trans').value.trim();
@@ -1686,10 +1862,7 @@ window.editDua = function(id) {
 };
 
 window.deleteDua = function(id) {
-  if (confirm('Delete this dua?')) {
-    S.customDuas = (S.customDuas||[]).filter(x => x.id !== id);
-    save(); renderDuas();
-  }
+  appConfirm('Delete this dua?', (res) => { if(res) { S.customDuas = (S.customDuas||[]).filter(x => x.id !== id); save(); renderDuas(); } });
 };
 
 // Add / Edit Dua modal
@@ -1703,7 +1876,7 @@ document.getElementById('btn-cancel-add-dua').addEventListener('click', () => cl
 document.getElementById('btn-save-add-dua').addEventListener('click', () => {
   const title   = document.getElementById('cd-title').value.trim();
   const meaning = document.getElementById('cd-meaning').value.trim();
-  if (!title || !meaning) { alert('Title and Meaning are required'); return; }
+  if (!title || !meaning) { appAlert('Title and Meaning are required', 'Required'); return; }
   const arabic  = document.getElementById('cd-arabic').value.trim();
   const trans   = document.getElementById('cd-trans').value.trim();
   const ref     = document.getElementById('cd-ref').value.trim();
@@ -1894,13 +2067,13 @@ window.toggleTodo = i => {
   if (S.todos[i].done) beep();
 };
 window.delTodo = i => {
-  if (confirm('Delete this goal?')) { S.todos.splice(i, 1); save(); renderTodos(); }
+  appConfirm('Delete this goal?', (res) => { if(res) { S.todos.splice(i, 1); save(); renderTodos(); } });
 };
 document.getElementById('btn-add-todo').addEventListener('click', () => openModal('modal-todo'));
 document.getElementById('btn-cancel-todo').addEventListener('click', () => closeModal('modal-todo'));
 document.getElementById('btn-save-todo').addEventListener('click', () => {
   const val = document.getElementById('t-title').value.trim();
-  if (!val) { alert('Enter a title'); return; }
+  if (!val) { appAlert('Enter a title', 'Required'); return; }
   if (!S.todos) S.todos = [];
   S.todos.push({ id:'t_'+Date.now(), title:val, done:false });
   save(); renderTodos();
@@ -1971,7 +2144,7 @@ document.querySelectorAll('.nav-btn').forEach(b => {
 document.getElementById('set-sound').addEventListener('change', e => { S.sound = e.target.checked; save(); });
 document.getElementById('set-vibrate').addEventListener('change', e => { S.vibrate = e.target.checked; save(); });
 document.getElementById('btn-clear-data').addEventListener('click', () => {
-  if (confirm('Delete all data and reset?')) { localStorage.clear(); location.reload(); }
+  appConfirm('Delete all data and reset?', (res) => { if(res) { localStorage.clear(); location.reload(); } });
 });
 document.getElementById('set-sound').checked   = S.sound;
 document.getElementById('set-vibrate').checked = S.vibrate;
@@ -2016,9 +2189,9 @@ async function triggerInstall(e) {
   } else {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     if (isIOS) {
-      alert('To install on iOS: Tap the Share button below, then select "Add to Home Screen".');
+      appAlert('To install on iOS: Tap the Share button below, then select "Add to Home Screen".', 'Install App');
     } else {
-      alert('Open in Chrome/Edge on Android and tap "Add to Home Screen", or use Share on iOS Safari.');
+      appAlert('Open in Chrome/Edge on Android and tap "Add to Home Screen", or use Share on iOS Safari.', 'Install App');
     }
   }
 }
@@ -2028,7 +2201,7 @@ document.getElementById('btn-banner-close').addEventListener('click', () => {
   document.getElementById('install-banner').classList.add('hidden');
   localStorage.setItem('banner_dismissed','1');
 });
-if (window.matchMedia('(display-mode: standalone)').matches || localStorage.getItem('banner_dismissed')) {
+if ((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || localStorage.getItem('banner_dismissed')) {
   document.getElementById('install-banner').classList.add('hidden');
 }
 
@@ -2062,10 +2235,351 @@ document.querySelectorAll('.color-swatch').forEach(sw => {
   });
 });
 
+
+/* ═══════════════════════════════════════
+   REMINDER & NOTIFICATION SYSTEM
+═══════════════════════════════════════ */
+const REMINDER_SYS = {
+  prayerTimes: null,
+  reminders: [],
+  lastTriggered: {},
+    init() {
+    this.load();
+    this.setupDeepLinking();
+    this.getPrayerTimes();
+    setInterval(() => this.checkClock(), 60000);
+    setTimeout(() => this.checkClock(), 2000); // initial check
+    this.render();
+  },
+  load() {
+    try {
+      const stored = JSON.parse(localStorage.getItem('tasbih_reminders'));
+      this.lastTriggered = JSON.parse(localStorage.getItem('tasbih_rem_triggered')) || {};
+      if (stored && stored.length > 0) {
+        this.reminders = stored;
+      } else {
+        // Defaults
+        this.reminders = [
+          { id: 'sys_wakeup', type: 'system', title: 'Wake Up Dua', msg: "Alhamdulillahilladhee ahyana ba'da ma amatana wa-ilayhin-nushoor.", trigger: 'fajr', fallback: '05:00', enabled: false, targetId: 'd06' },
+          { id: 'sys_sleep', type: 'system', title: 'Sleep Dua', msg: "Allahumma bismika amutu wa ahya.", trigger: 'isha', fallback: '21:00', enabled: false, targetId: 'd05' }
+        ];
+        this.save();
+      }
+    } catch(e) { console.error('Reminders load error', e); }
+  },
+  save() {
+    localStorage.setItem('tasbih_reminders', JSON.stringify(this.reminders));
+    localStorage.setItem('tasbih_rem_triggered', JSON.stringify(this.lastTriggered));
+    this.render();
+  },
+  getPrayerTimes() {
+    if (!navigator.geolocation || !window.adhan) return;
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        const coords = new adhan.Coordinates(pos.coords.latitude, pos.coords.longitude);
+        const date = new Date();
+        const params = adhan.CalculationMethod.MuslimWorldLeague();
+        this.prayerTimes = new adhan.PrayerTimes(coords, date, params);
+        this.render(); // update times in UI
+      },
+      err => console.log('Geolocation skipped for prayers:', err)
+    );
+  },
+  getTriggerTime(rem) {
+    if (rem.type === 'custom') return rem.trigger; // HH:MM
+    if (this.prayerTimes) {
+      const pTime = this.prayerTimes[rem.trigger];
+      if (pTime) {
+        const hrs = pTime.getHours().toString().padStart(2, '0');
+        const mins = pTime.getMinutes().toString().padStart(2, '0');
+        return `${hrs}:${mins}`;
+      }
+    }
+    return rem.fallback;
+  },
+  checkClock() {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    const now = new Date();
+    const currentHM = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    const todayStr = now.toDateString();
+
+    this.reminders.forEach(rem => {
+      if (!rem.enabled) return;
+      const targetTime = this.getTriggerTime(rem);
+      if (targetTime === currentHM) {
+        const triggerKey = rem.id + '_' + todayStr;
+        if (!this.lastTriggered[triggerKey]) {
+          this.triggerNotification(rem);
+          this.lastTriggered[triggerKey] = true;
+          this.save();
+        }
+      }
+    });
+  },
+  triggerNotification(rem) {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+      navigator.serviceWorker.ready.then(reg => {
+        reg.showNotification(rem.title, {
+          body: rem.msg,
+          icon: './icon-192.png',
+          badge: './icon-192.png',
+          vibrate: [200, 100, 200],
+          data: { target: 'dua', id: rem.targetId || null }
+        });
+      });
+    }
+  },
+  setupDeepLinking() {
+    // Handle foreground SW message
+    if ('serviceWorker' in navigator && navigator.serviceWorker) {
+      navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data && event.data.target === 'dua' && event.data.id) {
+          document.querySelector('.nav-btn[data-tab="dua"]').click();
+          openDuaModal(event.data.id);
+        }
+      });
+    }
+    // Handle cold start deep link via URL query
+    const urlParams = new URLSearchParams(window.location.search);
+    const deepLink = urlParams.get('deepLink');
+    if (deepLink) {
+      try {
+        const payload = JSON.parse(decodeURIComponent(deepLink));
+        if (payload.target === 'dua' && payload.id) {
+          setTimeout(() => {
+            document.querySelector('.nav-btn[data-tab="dua"]').click();
+            openDuaModal(payload.id);
+          }, 500);
+        }
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } catch(e) {}
+    }
+  },
+  render() {
+    const list = document.getElementById('reminders-list');
+    if(!list) return;
+    list.innerHTML = '';
+    
+    // Permission banner
+    const permBanner = document.getElementById('perm-banner');
+    if (!('Notification' in window) || Notification.permission === 'denied' || Notification.permission === 'default') {
+      const anyEnabled = this.reminders.some(r => r.enabled);
+      permBanner.style.display = anyEnabled ? 'flex' : 'none';
+    } else {
+      permBanner.style.display = 'none';
+    }
+
+    // Sort to find next reminder
+    let nextRem = null;
+    let nextTimeDiff = Infinity;
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+
+    this.reminders.forEach(rem => {
+      const t = this.getTriggerTime(rem);
+      
+      // Calculate next diff
+      if (rem.enabled && t) {
+        const [h, m] = t.split(':').map(Number);
+        let rMins = h * 60 + m;
+        let diff = rMins - currentMins;
+        if (diff < 0) diff += 24 * 60; // tomorrow
+        if (diff < nextTimeDiff) {
+          nextTimeDiff = diff;
+          nextRem = { ...rem, timeStr: t };
+        }
+      }
+
+      const card = document.createElement('div');
+      card.className = 'reminder-card';
+      card.innerHTML = `
+        <div class="reminder-header">
+          <div class="reminder-title">${rem.title}</div>
+          <div class="reminder-time">${t || '--:--'}</div>
+        </div>
+        <div class="reminder-desc">${rem.msg}</div>
+        <div class="reminder-controls">
+          ${rem.type === 'custom'
+            ? `<span class="reminder-edit-btn" onclick="editReminder('${rem.id}')">✏ Edit</span>`
+            : `<span class="reminder-label">${rem.trigger === 'fajr' ? '🕌 Auto (Fajr)' : '🌙 Auto (Isha)'}</span>`
+          }
+          <label class="toggle-switch">
+            <input type="checkbox" onchange="toggleReminder('${rem.id}', this.checked)" ${rem.enabled ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      `;
+      list.appendChild(card);
+    });
+
+    // Stats box
+    if (nextRem) {
+      document.getElementById('next-reminder-time').textContent = nextRem.timeStr;
+      document.getElementById('next-reminder-title').textContent = nextRem.title;
+    } else {
+      document.getElementById('next-reminder-time').textContent = '--:--';
+      document.getElementById('next-reminder-title').textContent = 'No active reminders';
+    }
+  }
+};
+
+window.toggleReminder = function(id, state) {
+  const r = REMINDER_SYS.reminders.find(x => x.id === id);
+  if(!r) return;
+  
+  if (state && 'Notification' in window) {
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().then(perm => {
+        if (perm === 'granted') {
+          r.enabled = true;
+        } else {
+          r.enabled = false;
+        }
+        REMINDER_SYS.save();
+        REMINDER_SYS.render();
+      });
+      return;
+    } else if (Notification.permission === 'denied') {
+      appAlert('Notifications are blocked. Please enable them in your device settings to use reminders.<br><br><div style="text-align:left; font-size:13px; line-height:1.5;"><b>Android (Chrome):</b> Tap the lock icon in the address bar &gt; Permissions &gt; Allow Notifications.<br><br><b>iPhone/iPad:</b> Open the Settings app &gt; find Tasbih (or Safari) &gt; Notifications &gt; Allow.</div>', 'Permission Blocked');
+      r.enabled = false;
+      REMINDER_SYS.render();
+      return;
+    }
+  } else if (state && !('Notification' in window)) {
+    appAlert('This browser does not support notifications.', 'Unsupported');
+    r.enabled = false;
+    REMINDER_SYS.render();
+    return;
+  }
+  
+  r.enabled = state;
+  REMINDER_SYS.save();
+  REMINDER_SYS.render();
+};
+
+window.requestNotificationPermission = function() {
+  if (!('Notification' in window)) {
+    appAlert('This browser does not support notifications.', 'Unsupported');
+    return;
+  }
+  Notification.requestPermission().then(perm => {
+    if (perm === 'granted') {
+      const anyOn = REMINDER_SYS.reminders.some(r => r.type === 'system' && r.enabled);
+      if (!anyOn) {
+        REMINDER_SYS.reminders.forEach(r => { if (r.type === 'system') r.enabled = true; });
+        REMINDER_SYS.save();
+        return; // save() already calls render()
+      }
+    }
+    REMINDER_SYS.render();
+  });
+};
+
+window.openReminderModal = function(id = null) {
+  const m = document.getElementById('modal-reminder');
+  openModal('modal-reminder');
+  if (id) {
+    const r = REMINDER_SYS.reminders.find(x => x.id === id);
+    document.getElementById('rem-title').value = r.title;
+    document.getElementById('rem-msg').value = r.msg;
+    document.getElementById('rem-time').value = r.trigger;
+    document.getElementById('rem-id').value = r.id;
+    document.getElementById('rem-modal-title').textContent = 'Edit Reminder';
+  } else {
+    document.getElementById('rem-title').value = '';
+    document.getElementById('rem-msg').value = '';
+    document.getElementById('rem-time').value = '12:00';
+    document.getElementById('rem-id').value = '';
+    document.getElementById('rem-modal-title').textContent = 'New Reminder';
+  }
+};
+
+window.closeReminderModal = function() {
+  closeModal('modal-reminder');
+};
+
+window.saveCustomReminder = function() {
+  const id = document.getElementById('rem-id').value;
+  const title = document.getElementById('rem-title').value.trim();
+  const msg = document.getElementById('rem-msg').value.trim();
+  const time = document.getElementById('rem-time').value;
+  
+  if (!title || !time) return;
+  
+  if (id) {
+    const r = REMINDER_SYS.reminders.find(x => x.id === id);
+    if(r) { r.title = title; r.msg = msg; r.trigger = time; }
+  } else {
+    REMINDER_SYS.reminders.push({
+      id: 'custom_' + Date.now(),
+      type: 'custom',
+      title: title,
+      msg: msg,
+      trigger: time,
+      enabled: true
+    });
+  }
+  REMINDER_SYS.save();
+  closeReminderModal();
+  if('Notification' in window && Notification.permission === 'default') requestNotificationPermission();
+};
+
+// Add REMINDER_SYS.init() to the bottom INIT block
+
+
+/* ═══════════════════════════════════════
+   CUSTOM PROMPTS
+═══════════════════════════════════════ */
+window.appAlert = function(msg, title = 'Notice') {
+  document.getElementById('prompt-title').textContent = title;
+  document.getElementById('prompt-msg').innerHTML = msg;
+  document.getElementById('btn-prompt-cancel').style.display = 'none';
+  document.getElementById('btn-prompt-ok').onclick = () => { closeModal('modal-custom-prompt'); };
+  openModal('modal-custom-prompt');
+};
+
+window.appConfirm = function(msg, callback, title = 'Confirm') {
+  document.getElementById('prompt-title').textContent = title;
+  document.getElementById('prompt-msg').innerHTML = msg;
+  document.getElementById('btn-prompt-cancel').style.display = 'block';
+  document.getElementById('btn-prompt-cancel').onclick = () => { closeModal('modal-custom-prompt'); if(callback) callback(false); };
+  document.getElementById('btn-prompt-ok').onclick = () => { closeModal('modal-custom-prompt'); if(callback) callback(true); };
+  openModal('modal-custom-prompt');
+};
+
+
+window.addEventListener('load', () => {
+  if (!('Notification' in window)) return;
+
+  if (Notification.permission === 'default') {
+    // Ask immediately — no custom pre-prompt, straight to the browser dialog
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') {
+        // Auto-enable both built-in system reminders
+        REMINDER_SYS.reminders.forEach(r => {
+          if (r.type === 'system') r.enabled = true;
+        });
+        REMINDER_SYS.save();
+      }
+    });
+  } else if (Notification.permission === 'granted') {
+    // Already granted (returning user): make sure default reminders
+    // are enabled if they've never been explicitly turned off
+    const anySystemEnabled = REMINDER_SYS.reminders.some(r => r.type === 'system' && r.enabled);
+    if (!anySystemEnabled) {
+      REMINDER_SYS.reminders.forEach(r => {
+        if (r.type === 'system') r.enabled = true;
+      });
+      REMINDER_SYS.save();
+    }
+  }
+});
+
 /* ═══════════════════════════════════════
    INIT
 ═══════════════════════════════════════ */
-if (S.themeColor) applyTheme(S.themeColor);
+REMINDER_SYS.init();
+    if (S.themeColor) applyTheme(S.themeColor);
     renderCounter();
 renderDuas();
 renderHadiths();

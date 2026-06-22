@@ -1,4 +1,4 @@
-# Flutter / Dart (not needed for web deployment)
+# ─── Flutter / Dart (not used in web build) ───────────────────────────────────
 lib/
 test/
 pubspec.yaml
@@ -8,25 +8,27 @@ pubspec.lock
 .flutter-plugins-dependencies
 build/
 .packages
-
-# Old Flutter web folder (sw.js moved to root)
 web/
 
-# OS files
+# ─── OS files ─────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
+ehthumbs.db
 
-# Editor
+# ─── Editor ───────────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
+*.suo
+*.user
 
-# Logs
+# ─── Logs ─────────────────────────────────────────────────────────────────────
 *.log
+npm-debug.log*
 
-# Temporary & Backup Scripts
+# ─── Temporary, Backup & Dev Scripts ──────────────────────────────────────────
 index_backup.html
 patch.js
 verify.js
@@ -36,7 +38,9 @@ redesign.js
 test_script.js
 temp_script.js
 color_patch.js
+reminders_patch.js
+apply_custom_prompts.js
 
-# Dependencies
+# ─── Node / Dependencies ──────────────────────────────────────────────────────
 node_modules/
 package-lock.json

@@ -5,7 +5,8 @@ const ASSETS_TO_CACHE = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
-  './assets/logo.png'
+  './assets/logo.png',
+  'https://cdn.jsdelivr.net/npm/adhan@4.3.3/lib/adhan.min.js'
 ];
 
 // Install Service Worker and Pre-cache Assets
@@ -69,6 +70,30 @@ self.addEventListener('fetch', (event) => {
           return caches.match('./index.html');
         }
       });
+    })
+  );
+});
+
+// Handle Notification Click (Deep Linking)
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const payload = event.notification.data;
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if there is already a window/tab open
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url.includes('index.html') && 'focus' in client) {
+          client.focus();
+          client.postMessage(payload);
+          return;
+        }
+      }
+      // If no window is open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow('./index.html?deepLink=' + encodeURIComponent(JSON.stringify(payload)));
+      }
     })
   );
 });
