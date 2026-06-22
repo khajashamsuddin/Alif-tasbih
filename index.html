@@ -10,6 +10,7 @@
   <meta name="description" content="Alif Tasbih — Islamic Dhikr, Duas, Hadith & Battles Companion">
   <link rel="manifest" href="./manifest.json">
   <title>Alif Tasbih</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
   <style>
     /* ══ THEME TOKENS ══ */
@@ -232,21 +233,7 @@
     .translit-disp { font-size: 13px; font-weight: 500; font-style: italic; color: var(--text); text-align: center; margin-bottom: 4px; }
     .meaning-disp { font-size: 12px; color: var(--text-muted); text-align: center; }
 
-    .tap-wrap { position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; touch-action: manipulation; }
-    .ring-svg { position: absolute; inset: 0; transform: rotate(-90deg); }
-    .ring-track { fill: none; stroke: var(--border); stroke-width: 5; }
-    .ring-prog  { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 565; stroke-dashoffset: 565; transition: stroke-dashoffset .1s ease; }
-    .tap-circle {
-      width: 165px; height: 165px; border-radius: 50%;
-      background: radial-gradient(circle, var(--card2) 10%, var(--card) 100%);
-      border: 1px solid var(--border);
-      box-shadow: 0 6px 24px rgba(0,0,0,.3), inset 0 1px 4px rgba(255,255,255,.04);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      transition: transform .06s; user-select: none;
-    }
-    .tap-circle:active { transform: scale(.96); }
-    .tap-num { font-family: var(--font-h); font-size: 46px; font-weight: 800; line-height: 1; }
-    .tap-sub { font-size: 11px; color: var(--accent); font-weight: 700; background: var(--accent-dim); padding: 2px 8px; border-radius: 8px; margin-top: 4px; }
+    
     .ctr-actions { display: flex; gap: 10px; width: 100%; margin-top: auto; }
     .ctr-actions .btn { flex: 1; }
 
@@ -381,16 +368,217 @@
     .ds-val { font-family: var(--font-h); font-size: 20px; font-weight: 800; color: var(--primary-light); }
 
     /* ══ NAMES OF ALLAH SECTION ══ */
-    .names-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .name-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 8px; text-align: center; }
-    .name-arabic { font-family: 'Amiri', serif; font-size: 17px; color: var(--primary-light); line-height: 1.3; margin-bottom: 4px; }
-    .name-english { font-size: 9.5px; color: var(--text-muted); font-weight: 500; }
 
 
-  </style>
+  
+    /* ══════════════════════════════════════
+       TASBIH COUNTER — Realistic Teardrop Design
+    ══════════════════════════════════════ */
+    .counter-area {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 0 20px;
+      position: relative;
+    }
+    .tasbih-wrap {
+      position: relative;
+      width: 200px;
+      height: 320px;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      filter: drop-shadow(0 24px 48px rgba(0,0,0,0.8));
+      transition: filter 0.1s;
+    }
+    .tasbih-wrap:active {
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.7));
+    }
+    /* SVG body fills entire wrap */
+    .tasbih-svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+    /* LCD screen overlay on top of SVG */
+    .tasbih-lcd-wrap {
+      position: absolute;
+      top: 38%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 88px;
+      height: 58px;
+      background: linear-gradient(145deg, #b0c09a, #8fa07a);
+      border-radius: 6px;
+      border: 2.5px solid #0a0a0a;
+      box-shadow:
+        inset 0 3px 8px rgba(0,0,0,0.45),
+        inset 0 0 0 1px rgba(255,255,255,0.08),
+        0 2px 6px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    /* Scanlines */
+    .tasbih-lcd-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0,0,0,0.06) 0px,
+        rgba(0,0,0,0.06) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      pointer-events: none;
+    }
+    .tasbih-brand {
+      font-family: 'Outfit', sans-serif;
+      font-size: 7px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: #2a3a1a;
+      text-transform: uppercase;
+      position: absolute;
+      top: 5px;
+      left: 7px;
+    }
+    .tasbih-count {
+      font-family: 'Courier New', monospace;
+      font-size: 34px;
+      font-weight: 900;
+      color: #0f1f06;
+      line-height: 1;
+      letter-spacing: -1px;
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.15);
+      z-index: 1;
+    }
+    .tasbih-target {
+      font-family: 'Courier New', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: #2a3a1a;
+      position: absolute;
+      bottom: 5px;
+      right: 7px;
+    }
+    /* Trigger button — the top bumper */
+    .tasbih-trigger {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 52px;
+      height: 28px;
+      background: radial-gradient(ellipse at 50% 20%, #444, #111);
+      border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
+      box-shadow:
+        0 4px 10px rgba(0,0,0,0.7),
+        inset 0 2px 4px rgba(255,255,255,0.12);
+      cursor: pointer;
+      z-index: 10;
+      transform-origin: bottom center;
+    }
+    .tasbih-trigger::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 4px;
+      background: linear-gradient(90deg, #178559, #0D5238);
+      border-radius: 2px;
+      box-shadow: 0 1px 6px rgba(23,133,89,0.6);
+    }
+    /* Tassel */
+    .tasbih-tassel-wrap {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+    .tasbih-cord {
+      width: 3px;
+      height: 28px;
+      background: linear-gradient(to bottom, #c8a520, #a07010);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .tasbih-tassel {
+      width: 28px;
+      height: 36px;
+      background: repeating-linear-gradient(
+        90deg,
+        #d4af37 0px, #d4af37 2px,
+        #c9940a 2px, #c9940a 4px,
+        #e6c84a 4px, #e6c84a 5px,
+        #b8860b 5px, #b8860b 7px
+      );
+      clip-path: polygon(10% 0%, 90% 0%, 100% 100%, 0% 100%);
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+    }
+    .tasbih-tassel::after {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 8px;
+      background: #a07010;
+      border-radius: 0 0 4px 4px;
+    }
+    /* Counter bump animation */
+    .tasbih-count.bump {
+      animation: lcdBump 0.12s ease-out;
+    }
+    @keyframes lcdBump {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); color: #0a3a00; }
+      100% { transform: scale(1); }
+    }
+    /* Knowledge tab fix */
+    .hpane { display: none; flex-direction: column; gap: 12px; width: 100%; }
+    .hpane.active { display: flex; }
+    /* Names grid */
+    .names-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; }
+    .name-card {
+      background: linear-gradient(135deg, var(--card), var(--card2));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .name-arabic { font-family: 'Amiri', serif; font-size: 22px; color: var(--primary-light); }
+    .name-translit { font-size: 11px; font-weight: 700; font-style: italic; color: var(--text); }
+    .name-english { font-size: 10px; color: var(--text-muted); }
+
+  
+    /* ══ TASBIH COLOR THEMES ══ */
+    body.theme-black { --tasbih-c1: #3a3a3a; --tasbih-c2: #181818; --tasbih-c3: #080808; }
+    body.theme-green { --tasbih-c1: #2d6647; --tasbih-c2: #123d26; --tasbih-c3: #051c0f; }
+    body.theme-blue { --tasbih-c1: #2d4c66; --tasbih-c2: #122b3d; --tasbih-c3: #05121c; }
+    body.theme-red { --tasbih-c1: #662d2d; --tasbih-c2: #3d1212; --tasbih-c3: #1c0505; }
+    body.theme-gold { --tasbih-c1: #b89a47; --tasbih-c2: #6b551c; --tasbih-c3: #332607; }
+    body.theme-white { --tasbih-c1: #f0f0f0; --tasbih-c2: #cccccc; --tasbih-c3: #999999; }
+    
+    .color-swatch-row { display: flex; gap: 12px; margin-top: 6px; }
+    .color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s, border-color 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+    .color-swatch:active { transform: scale(0.9); }
+    .color-swatch.active { border-color: var(--primary-light); transform: scale(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+</style>
 </head>
 <body>
 <div id="app">
+
 
   <!-- INSTALL BANNER -->
   <div id="install-banner" class="hidden">
@@ -449,14 +637,74 @@
       <div class="translit-disp" id="translit-disp">SubhanAllah</div>
       <div class="meaning-disp" id="meaning-disp">Glory be to Allah</div>
 
-      <div class="tap-wrap" id="tap-btn">
-        <svg class="ring-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <circle class="ring-track" cx="100" cy="100" r="90"/>
-          <circle class="ring-prog"  cx="100" cy="100" r="90" id="ring-prog"/>
-        </svg>
-        <div class="tap-circle">
-          <span class="tap-num" id="count-disp">0</span>
-          <span class="tap-sub" id="target-disp">/ 33</span>
+      <div class="counter-area">
+        <!-- Tasbih Counter -->
+        <div class="tasbih-wrap" id="tap-btn">
+          <!-- Trigger bump at top -->
+          <div class="tasbih-trigger" id="tally-trigger"></div>
+
+          <!-- SVG body - teardrop ergonomic shape -->
+          <svg class="tasbih-svg" viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="bodyGrad" cx="35%" cy="25%" r="75%">
+                <stop offset="0%" stop-color="var(--tasbih-c1, #3a3a3a)"/>
+                <stop offset="60%" stop-color="var(--tasbih-c2, #181818)"/>
+                <stop offset="100%" stop-color="var(--tasbih-c3, #080808)"/>
+              </radialGradient>
+              <radialGradient id="ringGrad" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#404040"/>
+                <stop offset="100%" stop-color="#0d0d0d"/>
+              </radialGradient>
+              <radialGradient id="knobGrad" cx="35%" cy="30%" r="70%">
+                <stop offset="0%" stop-color="#383838"/>
+                <stop offset="100%" stop-color="#0d0d0d"/>
+              </radialGradient>
+              <filter id="bodyInnerShadow" x="-10%" y="-10%" width="120%" height="120%">
+                <feGaussianBlur stdDeviation="4" result="blur"/>
+                <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+              </filter>
+            </defs>
+
+            <!-- Finger ring at top -->
+            <circle cx="100" cy="45" r="32" fill="url(#ringGrad)" />
+            <circle cx="100" cy="45" r="20" fill="#0a0a0a" />
+            <circle cx="93" cy="38" r="6" fill="rgba(255,255,255,0.06)" />
+
+            <!-- Main teardrop body -->
+            <path d="M 62 60
+                     C 30 60, 18 90, 18 120
+                     C 18 180, 30 230, 60 260
+                     C 72 275, 88 285, 100 285
+                     C 112 285, 128 275, 140 260
+                     C 170 230, 182 180, 182 120
+                     C 182 90, 170 60, 138 60
+                     C 130 58, 115 55, 100 55
+                     C 85 55, 70 58, 62 60 Z"
+                  fill="url(#bodyGrad)" />
+
+            <!-- Body highlight stripe -->
+            <path d="M 68 68
+                     C 45 72, 36 95, 36 120
+                     C 36 150, 44 190, 65 225"
+                  fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="8" stroke-linecap="round"/>
+
+            <!-- Bottom knob/ball -->
+            <circle cx="100" cy="278" r="14" fill="url(#knobGrad)" />
+            <circle cx="95" cy="273" r="4" fill="rgba(255,255,255,0.07)" />
+          </svg>
+
+          <!-- LCD Screen overlay -->
+          <div class="tasbih-lcd-wrap">
+            <div class="tasbih-brand">DHIKR</div>
+            <div class="tasbih-count" id="count-disp">0</div>
+            <div class="tasbih-target" id="target-disp">/ 33</div>
+          </div>
+
+          <!-- Tassel -->
+          <div class="tasbih-tassel-wrap">
+            <div class="tasbih-cord"></div>
+            <div class="tasbih-tassel"></div>
+          </div>
         </div>
       </div>
 
@@ -544,8 +792,23 @@
     <div class="stats-grid">
       <div class="stat-box">
         <div class="stat-box-icon" style="background:rgba(23,133,89,.12);"><svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;stroke-linecap:round;"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
-        <div class="stat-val" id="s-total">0</div>
-        <div class="stat-lbl">Total Recited</div>
+        <div class="stat-val" id="s-today">0</div>
+        <div class="stat-lbl">Today</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-icon" style="background:rgba(23,133,89,.12);"><svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;stroke-linecap:round;"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg></div>
+        <div class="stat-val" id="s-week">0</div>
+        <div class="stat-lbl">This Week</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-icon" style="background:rgba(23,133,89,.12);"><svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;stroke-linecap:round;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <div class="stat-val" id="s-month">0</div>
+        <div class="stat-lbl">This Month</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-box-icon" style="background:rgba(23,133,89,.12);"><svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;stroke-linecap:round;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div class="stat-val" id="s-lifetime">0</div>
+        <div class="stat-lbl">Lifetime</div>
       </div>
       <div class="stat-box">
         <div class="stat-box-icon" style="background:rgba(201,162,39,.12);"><svg viewBox="0 0 24 24" style="fill:var(--accent);stroke:none;"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/></svg></div>
@@ -556,11 +819,6 @@
         <div class="stat-box-icon" style="background:rgba(23,133,89,.12);"><svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;stroke-linecap:round;"><polyline points="20 6 9 17 4 12"/></svg></div>
         <div class="stat-val" id="s-done-todos">0</div>
         <div class="stat-lbl">Goals Today</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-box-icon" style="background:rgba(201,162,39,.12);"><svg viewBox="0 0 24 24" style="stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div>
-        <div class="stat-val" id="s-sessions">0</div>
-        <div class="stat-lbl">Sessions</div>
       </div>
     </div>
 
@@ -594,6 +852,22 @@
   <div id="tab-settings" class="tab">
     <div class="settings-section">
       <div class="settings-section-title">Preferences</div>
+
+      <div class="setting-row" style="flex-direction: column; align-items: flex-start;">
+        <div class="setting-row-label" style="margin-bottom: 8px;">
+          <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+          <span>Counter Color</span>
+        </div>
+        <div class="color-swatch-row" id="color-picker">
+          <div class="color-swatch active" data-theme="theme-black" style="background: #181818;" title="Midnight Black"></div>
+          <div class="color-swatch" data-theme="theme-green" style="background: #123d26;" title="Emerald Green"></div>
+          <div class="color-swatch" data-theme="theme-blue" style="background: #122b3d;" title="Royal Blue"></div>
+          <div class="color-swatch" data-theme="theme-red" style="background: #3d1212;" title="Crimson Red"></div>
+          <div class="color-swatch" data-theme="theme-gold" style="background: #6b551c;" title="Rose Gold"></div>
+          <div class="color-swatch" data-theme="theme-white" style="background: #f0f0f0; border: 1px solid #ccc;" title="Pure White"></div>
+        </div>
+      </div>
+
       <div class="setting-row">
         <div class="setting-row-label">
           <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
@@ -890,39 +1164,39 @@ const BATTLES = [
    DATA — 99 NAMES OF ALLAH
 ═══════════════════════════════════════ */
 const ALLAH_NAMES = [
-  {a:'الرَّحْمٰن',e:'The Most Gracious'},{a:'الرَّحِيم',e:'The Most Merciful'},{a:'الْمَلِك',e:'The King'},
-  {a:'الْقُدُّوس',e:'The Most Holy'},{a:'السَّلام',e:'The Peace'},{a:'الْمُؤْمِن',e:'The Faithful'},
-  {a:'الْمُهَيْمِن',e:'The Guardian'},{a:'الْعَزِيز',e:'The Almighty'},{a:'الْجَبَّار',e:'The Compeller'},
-  {a:'الْمُتَكَبِّر',e:'The Supreme'},{a:'الْخَالِق',e:'The Creator'},{a:'الْبَارِئ',e:'The Originator'},
-  {a:'الْمُصَوِّر',e:'The Shaper'},{a:'الْغَفَّار',e:'The Forgiving'},{a:'الْقَهَّار',e:'The Subduer'},
-  {a:'الْوَهَّاب',e:'The Bestower'},{a:'الرَّزَّاق',e:'The Provider'},{a:'الْفَتَّاح',e:'The Opener'},
-  {a:'الْعَلِيم',e:'The All-Knowing'},{a:'الْقَابِض',e:'The Withholder'},{a:'الْبَاسِط',e:'The Expander'},
-  {a:'الْخَافِض',e:'The Abaser'},{a:'الرَّافِع',e:'The Exalter'},{a:'الْمُعِز',e:'The Honourer'},
-  {a:'الْمُذِل',e:'The Dishonourer'},{a:'السَّمِيع',e:'The All-Hearing'},{a:'الْبَصِير',e:'The All-Seeing'},
-  {a:'الْحَكَم',e:'The Judge'},{a:'الْعَدْل',e:'The Just'},{a:'اللَّطِيف',e:'The Subtle'},
-  {a:'الْخَبِير',e:'The All-Aware'},{a:'الْحَلِيم',e:'The Forbearing'},{a:'الْعَظِيم',e:'The Magnificent'},
-  {a:'الْغَفُور',e:'The Forgiving'},{a:'الشَّكُور',e:'The Appreciative'},{a:'الْعَلِي',e:'The Most High'},
-  {a:'الْكَبِير',e:'The Most Great'},{a:'الْحَفِيظ',e:'The Preserver'},{a:'الْمُقِيت',e:'The Sustainer'},
-  {a:'الْحَسِيب',e:'The Reckoner'},{a:'الْجَلِيل',e:'The Majestic'},{a:'الْكَرِيم',e:'The Generous'},
-  {a:'الرَّقِيب',e:'The Watchful'},{a:'الْمُجِيب',e:'The Responsive'},{a:'الْوَاسِع',e:'The Vast'},
-  {a:'الْحَكِيم',e:'The Wise'},{a:'الْوَدُود',e:'The Loving'},{a:'الْمَجِيد',e:'The Glorious'},
-  {a:'الْبَاعِث',e:'The Resurrector'},{a:'الشَّهِيد',e:'The Witness'},{a:'الْحَق',e:'The Truth'},
-  {a:'الْوَكِيل',e:'The Trustee'},{a:'الْقَوِي',e:'The Strong'},{a:'الْمَتِين',e:'The Firm'},
-  {a:'الْوَلِي',e:'The Protecting Friend'},{a:'الْحَمِيد',e:'The Praiseworthy'},{a:'الْمُحْصِي',e:'The Accounter'},
-  {a:'الْمُبْدِئ',e:'The Originator'},{a:'الْمُعِيد',e:'The Restorer'},{a:'الْمُحْيِي',e:'The Giver of Life'},
-  {a:'الْمُمِيت',e:'The Bringer of Death'},{a:'الْحَي',e:'The Ever-Living'},{a:'الْقَيُّوم',e:'The Self-Subsisting'},
-  {a:'الْوَاجِد',e:'The Finder'},{a:'الْمَاجِد',e:'The Noble'},{a:'الْوَاحِد',e:'The Unique'},
-  {a:'الأَحَد',e:'The One'},{a:'الصَّمَد',e:'The Eternal'},{a:'الْقَادِر',e:'The Able'},
-  {a:'الْمُقْتَدِر',e:'The Powerful'},{a:'الْمُقَدِّم',e:'The Expediter'},{a:'الْمُؤَخِّر',e:'The Delayer'},
-  {a:'الأَوَّل',e:'The First'},{a:'الآخِر',e:'The Last'},{a:'الظَّاهِر',e:'The Manifest'},
-  {a:'الْبَاطِن',e:'The Hidden'},{a:'الْوَالِي',e:'The Governor'},{a:'الْمُتَعَالِي',e:'The Most Exalted'},
-  {a:'الْبَر',e:'The Source of Goodness'},{a:'التَّوَّاب',e:'The Acceptor of Repentance'},{a:'الْمُنْتَقِم',e:'The Avenger'},
-  {a:'الْعَفُو',e:'The Pardoner'},{a:'الرَّءُوف',e:'The Compassionate'},{a:'مَالِكُ الْمُلْكِ',e:'Master of the Kingdom'},
-  {a:'ذُو الْجَلَالِ وَالإِكْرَامِ',e:'Lord of Majesty and Bounty'},{a:'الْمُقْسِط',e:'The Equitable'},{a:'الْجَامِع',e:'The Gatherer'},
-  {a:'الْغَنِي',e:'The Self-Sufficient'},{a:'الْمُغْنِي',e:'The Enricher'},{a:'الْمَانِع',e:'The Withholder'},
-  {a:'الضَّار',e:'The Distresser'},{a:'النَّافِع',e:'The Propitious'},{a:'النُّور',e:'The Light'},
-  {a:'الْهَادِي',e:'The Guide'},{a:'الْبَدِيع',e:'The Incomparable'},{a:'الْبَاقِي',e:'The Everlasting'},
-  {a:'الْوَارِث',e:'The Inheritor'},{a:'الرَّشِيد',e:'The Guide to the Right Path'},{a:'الصَّبُور',e:'The Patient'}
+  {a:'الرَّحْمٰن',t:'Ar-Rahman',e:'The Most Gracious'},{a:'الرَّحِيم',t:'Ar-Raheem',e:'The Most Merciful'},{a:'الْمَلِك',t:'Al-Malik',e:'The King'},
+  {a:'الْقُدُّوس',t:'Al-Quddus',e:'The Most Holy'},{a:'السَّلام',t:'As-Salam',e:'The Peace'},{a:'الْمُؤْمِن',t:'Al-Mu\'min',e:'The Faithful'},
+  {a:'الْمُهَيْمِن',t:'Al-Muhaymin',e:'The Guardian'},{a:'الْعَزِيز',t:'Al-Azeez',e:'The Almighty'},{a:'الْجَبَّار',t:'Al-Jabbar',e:'The Compeller'},
+  {a:'الْمُتَكَبِّر',t:'Al-Mutakabbir',e:'The Supreme'},{a:'الْخَالِق',t:'Al-Khaliq',e:'The Creator'},{a:'الْبَارِئ',t:'Al-Bari',e:'The Originator'},
+  {a:'الْمُصَوِّر',t:'Al-Musawwir',e:'The Shaper'},{a:'الْغَفَّار',t:'Al-Ghaffar',e:'The Forgiving'},{a:'الْقَهَّار',t:'Al-Qahhar',e:'The Subduer'},
+  {a:'الْوَهَّاب',t:'Al-Wahhab',e:'The Bestower'},{a:'الرَّزَّاق',t:'Ar-Razzaq',e:'The Provider'},{a:'الْفَتَّاح',t:'Al-Fattah',e:'The Opener'},
+  {a:'الْعَلِيم',t:'Al-Aleem',e:'The All-Knowing'},{a:'الْقَابِض',t:'Al-Qaabidh',e:'The Withholder'},{a:'الْبَاسِط',t:'Al-Baasit',e:'The Expander'},
+  {a:'الْخَافِض',t:'Al-Khaafidh',e:'The Abaser'},{a:'الرَّافِع',t:'Ar-Raafi\'',e:'The Exalter'},{a:'الْمُعِز',t:'Al-Mu\'iz',e:'The Honourer'},
+  {a:'الْمُذِل',t:'Al-Muzil',e:'The Dishonourer'},{a:'السَّمِيع',t:'As-Samee\'',e:'The All-Hearing'},{a:'الْبَصِير',t:'Al-Baseer',e:'The All-Seeing'},
+  {a:'الْحَكَم',t:'Al-Hakam',e:'The Judge'},{a:'الْعَدْل',t:'Al-\'Adl',e:'The Just'},{a:'اللَّطِيف',t:'Al-Lateef',e:'The Subtle'},
+  {a:'الْخَبِير',t:'Al-Khabeer',e:'The All-Aware'},{a:'الْحَلِيم',t:'Al-Haleem',e:'The Forbearing'},{a:'الْعَظِيم',t:'Al-Atheem',e:'The Magnificent'},
+  {a:'الْغَفُور',t:'Al-Ghafoor',e:'The Forgiving'},{a:'الشَّكُور',t:'Ash-Shakoor',e:'The Appreciative'},{a:'الْعَلِي',t:'Al-Ali',e:'The Most High'},
+  {a:'الْكَبِير',t:'Al-Kabeer',e:'The Most Great'},{a:'الْحَفِيظ',t:'Al-Hafidh',e:'The Preserver'},{a:'الْمُقِيت',t:'Al-Muqeet',e:'The Sustainer'},
+  {a:'الْحَسِيب',t:'Al-Haseeb',e:'The Reckoner'},{a:'الْجَلِيل',t:'Al-Jaleel',e:'The Majestic'},{a:'الْكَرِيم',t:'Al-Kareem',e:'The Generous'},
+  {a:'الرَّقِيب',t:'Ar-Raqeeb',e:'The Watchful'},{a:'الْمُجِيب',t:'Al-Mujeeb',e:'The Responsive'},{a:'الْوَاسِع',t:'Al-Waasi\'',e:'The Vast'},
+  {a:'الْحَكِيم',t:'Al-Hakeem',e:'The Wise'},{a:'الْوَدُود',t:'Al-Wadood',e:'The Loving'},{a:'الْمَجِيد',t:'Al-Majeed',e:'The Glorious'},
+  {a:'الْبَاعِث',t:'Al-Baa\'ith',e:'The Resurrector'},{a:'الشَّهِيد',t:'Ash-Shaheed',e:'The Witness'},{a:'الْحَق',t:'Al-Haqq',e:'The Truth'},
+  {a:'الْوَكِيل',t:'Al-Wakeel',e:'The Trustee'},{a:'الْقَوِي',t:'Al-Qawee',e:'The Strong'},{a:'الْمَتِين',t:'Al-Mateen',e:'The Firm'},
+  {a:'الْوَلِي',t:'Al-Walee',e:'The Protecting Friend'},{a:'الْحَمِيد',t:'Al-Hameed',e:'The Praiseworthy'},{a:'الْمُحْصِي',t:'Al-Muhsee',e:'The Accounter'},
+  {a:'الْمُبْدِئ',t:'Al-Mubdi',e:'The Originator'},{a:'الْمُعِيد',t:'Al-Mu\'eed',e:'The Restorer'},{a:'الْمُحْيِي',t:'Al-Muhyee',e:'The Giver of Life'},
+  {a:'الْمُمِيت',t:'Al-Mumeet',e:'The Bringer of Death'},{a:'الْحَي',t:'Al-Hayy',e:'The Ever-Living'},{a:'الْقَيُّوم',t:'Al-Qayyoom',e:'The Self-Subsisting'},
+  {a:'الْوَاجِد',t:'Al-Waajid',e:'The Finder'},{a:'الْمَاجِد',t:'Al-Maajid',e:'The Noble'},{a:'الْوَاحِد',t:'Al-Waahid',e:'The Unique'},
+  {a:'الأَحَد',t:'Al-Ahad',e:'The One'},{a:'الصَّمَد',t:'As-Samad',e:'The Eternal'},{a:'الْقَادِر',t:'Al-Qaadir',e:'The Able'},
+  {a:'الْمُقْتَدِر',t:'Al-Muqtadir',e:'The Powerful'},{a:'الْمُقَدِّم',t:'Al-Muqaddim',e:'The Expediter'},{a:'الْمُؤَخِّر',t:'Al-Mu\'akhkhir',e:'The Delayer'},
+  {a:'الأَوَّل',t:'Al-Awwal',e:'The First'},{a:'الآخِر',t:'Al-Aakhir',e:'The Last'},{a:'الظَّاهِر',t:'Adh-Dhaahir',e:'The Manifest'},
+  {a:'الْبَاطِن',t:'Al-Baatin',e:'The Hidden'},{a:'الْوَالِي',t:'Al-Waali',e:'The Governor'},{a:'الْمُتَعَالِي',t:'Al-Muta\'aali',e:'The Most Exalted'},
+  {a:'الْبَر',t:'Al-Barr',e:'The Source of Goodness'},{a:'التَّوَّاب',t:'At-Tawwaab',e:'The Acceptor of Repentance'},{a:'الْمُنْتَقِم',t:'Al-Muntaqim',e:'The Avenger'},
+  {a:'الْعَفُو',t:'Al-\'Afuww',e:'The Pardoner'},{a:'الرَّءُوف',t:'Ar-Ra\'oof',e:'The Compassionate'},{a:'مَالِكُ الْمُلْكِ',t:'Maalik-ul-Mulk',e:'Master of the Kingdom'},
+  {a:'ذُو الْجَلَالِ وَالإِكْرَامِ',t:'Dhul-Jalaali-wal-Ikraam',e:'Lord of Majesty and Bounty'},{a:'الْمُقْسِط',t:'Al-Muqsit',e:'The Equitable'},{a:'الْجَامِع',t:'Al-Jaami\'',e:'The Gatherer'},
+  {a:'الْغَنِي',t:'Al-Ghanee',e:'The Self-Sufficient'},{a:'الْمُغْنِي',t:'Al-Mughnee',e:'The Enricher'},{a:'الْمَانِع',t:'Al-Maani\'',e:'The Withholder'},
+  {a:'الضَّار',t:'Ad-Daarr',e:'The Distresser'},{a:'النَّافِع',t:'An-Naafi\'',e:'The Propitious'},{a:'النُّور',t:'An-Noor',e:'The Light'},
+  {a:'الْهَادِي',t:'Al-Haadi',e:'The Guide'},{a:'الْبَدِيع',t:'Al-Badee\'',e:'The Incomparable'},{a:'الْبَاقِي',t:'Al-Baaqee',e:'The Everlasting'},
+  {a:'الْوَارِث',t:'Al-Waarith',e:'The Inheritor'},{a:'الرَّشِيد',t:'Ar-Rasheed',e:'The Guide to the Right Path'},{a:'الصَّبُور',t:'As-Saboor',e:'The Patient'}
 ];
 
 /* ═══════════════════════════════════════
@@ -997,7 +1271,9 @@ let S = {
     { id:'t7', title:'Send Salawat on the Prophet ﷺ', done:false }
   ],
   todoDate: new Date().toDateString(),
-  weekData: [0,0,0,0,0,0,0]
+  weekData: [0,0,0,0,0,0,0],
+  stats: { today: 0, week: 0, month: 0, lifetime: 0 },
+  lastActiveDate: ''
 };
 try {
   const old = JSON.parse(localStorage.getItem('sabr_v3') || '{}');
@@ -1006,14 +1282,33 @@ try {
 } catch(e){}
 const save = () => localStorage.setItem('alif_v1', JSON.stringify(S));
 
-// Daily reset of todos
-if (S.todoDate !== new Date().toDateString()) {
-  if (S.todos) S.todos.forEach(t => t.done = false);
-  S.todoDate = new Date().toDateString();
-  // update weekly chart data
-  if (!S.weekData) S.weekData = [0,0,0,0,0,0,0];
-  const todayIdx = (new Date().getDay() + 6) % 7;
-  S.weekData[todayIdx] = 0;
+// Streak & Stats Logic
+const localDate = new Date().toLocaleDateString();
+if (S.lastActiveDate !== localDate) {
+  if (S.lastActiveDate) {
+    const lastD = new Date(S.lastActiveDate);
+    const currD = new Date(localDate);
+    const diffTime = Math.abs(currD - lastD);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (diffDays === 1) {
+      S.streak++;
+    } else if (diffDays > 1) {
+      S.streak = 1;
+    }
+  } else {
+    S.streak = 1;
+  }
+  S.lastActiveDate = localDate;
+  if (!S.stats) S.stats = { today: 0, week: 0, month: 0, lifetime: S.totalCount || 0 };
+  S.stats.today = 0; // reset today
+  
+  if (S.todoDate !== new Date().toDateString()) {
+    if (S.todos) S.todos.forEach(t => t.done = false);
+    S.todoDate = new Date().toDateString();
+    if (!S.weekData) S.weekData = [0,0,0,0,0,0,0];
+    const todayIdx = (new Date().getDay() + 6) % 7;
+    S.weekData[todayIdx] = 0;
+  }
   save();
 }
 
@@ -1026,12 +1321,12 @@ function beep() {
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.connect(g); g.connect(ctx.destination);
-    o.type = 'sine';
-    o.frequency.setValueAtTime(680, ctx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(80, ctx.currentTime + .08);
-    g.gain.setValueAtTime(.12, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .08);
-    o.start(); o.stop(ctx.currentTime + .08);
+    o.type = 'square';
+    o.frequency.setValueAtTime(150, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + .02);
+    g.gain.setValueAtTime(.05, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .02);
+    o.start(); o.stop(ctx.currentTime + .02);
   } catch(e){}
 }
 // renamed inner function to avoid conflict with global click
@@ -1113,23 +1408,26 @@ function getLabel(id) {
 }
 
 function renderCounter() {
-  const d   = getDhikr(S.active);
-  const cnt = S.counts[S.active] || 0;
-  document.getElementById('arabic-disp').textContent  = d.arabic;
-  document.getElementById('translit-disp').textContent = d.translit || '';
-  document.getElementById('meaning-disp').textContent = d.trans;
-  document.getElementById('count-disp').textContent   = cnt;
-  document.getElementById('target-disp').textContent  = `/ ${d.target}`;
-  // Update picker button label
-  const pickerLabel = document.getElementById('picker-label');
-  if (pickerLabel) pickerLabel.textContent = getLabel(S.active);
-  const pct = Math.min(cnt / d.target, 1);
-  document.getElementById('ring-prog').style.strokeDashoffset = C_PERIM - pct * C_PERIM;
-  document.getElementById('s-total').textContent  = S.totalCount || 0;
-  document.getElementById('s-streak').textContent = S.streak || 1;
-  document.getElementById('s-sessions').textContent = S.sessions || 0;
-  save();
-}
+
+    const d   = getDhikr(S.active);
+    const cnt = S.counts[S.active] || 0;
+    document.getElementById('arabic-disp').textContent  = d.arabic;
+    document.getElementById('translit-disp').textContent = d.translit || '';
+    document.getElementById('meaning-disp').textContent = d.trans;
+    document.getElementById('count-disp').textContent   = cnt;
+    document.getElementById('target-disp').textContent  = `/ ${d.target}`;
+    const pickerLabel = document.getElementById('picker-label');
+    if (pickerLabel) pickerLabel.textContent = getLabel(S.active);
+    if (!S.stats) S.stats = { today: 0, week: 0, month: 0, lifetime: S.totalCount || 0 };
+    document.getElementById('s-today').textContent  = S.stats.today || 0;
+    document.getElementById('s-week').textContent  = S.stats.week || 0;
+    document.getElementById('s-month').textContent  = S.stats.month || 0;
+    document.getElementById('s-lifetime').textContent  = S.stats.lifetime || S.totalCount || 0;
+    document.getElementById('s-streak').textContent = S.streak || 1;
+    const sSessions = document.getElementById('s-sessions');
+    if (sSessions) sSessions.textContent = S.sessions || 0;
+    save();
+    }
 
 /* ═══════════════════════════════════════
    DHIKR PICKER SHEET
@@ -1210,26 +1508,66 @@ document.getElementById('btn-open-sheet').addEventListener('click', openSheet);
 document.getElementById('btn-close-sheet').addEventListener('click', closeSheet);
 
 document.getElementById('tap-btn').addEventListener('click', () => {
+  const trigger = document.getElementById('tally-trigger');
+  if (trigger && window.gsap) {
+    gsap.killTweensOf(trigger);
+    gsap.to(trigger, { y: 10, duration: 0.08, ease: 'power2.out',
+      onComplete: () => gsap.to(trigger, { y: 0, duration: 0.18, ease: 'elastic.out(1, 0.5)' })
+    });
+  } else if (trigger) {
+    trigger.style.transform = 'translateX(-50%) translateY(10px)';
+    setTimeout(() => trigger.style.transform = 'translateX(-50%) translateY(0)', 150);
+  }
+
   if (!S.counts[S.active]) S.counts[S.active] = 0;
   S.counts[S.active]++;
   S.totalCount = (S.totalCount || 0) + 1;
-  // update sessions count when target reached
+  // LCD bump animation
+  const lcd = document.getElementById('count-disp');
+  if (lcd) { 
+    lcd.classList.remove('bump');
+    void lcd.offsetWidth;
+    lcd.classList.add('bump');
+    setTimeout(() => lcd.classList.remove('bump'), 120);
+  }
+  
+  if (!S.stats) S.stats = { today: 0, week: 0, month: 0, lifetime: S.totalCount };
+  S.stats.today++; S.stats.week++; S.stats.month++; S.stats.lifetime++;
+
   const d = getDhikr(S.active);
   if (S.counts[S.active] === d.target) {
     S.sessions = (S.sessions || 0) + 1;
   }
-  // weekly data
   if (!S.weekData) S.weekData = [0,0,0,0,0,0,0];
   const todayIdx = (new Date().getDay() + 6) % 7;
   S.weekData[todayIdx] = (S.weekData[todayIdx] || 0) + 1;
+  
   beep(); vibrateDevice();
   renderCounter();
 });
 
 document.getElementById('btn-undo').addEventListener('click', () => {
   if ((S.counts[S.active]||0) > 0) {
+    const trigger = document.getElementById('tally-trigger');
+    if (trigger) {
+      if (window.gsap) {
+      gsap.killTweensOf(trigger);
+      gsap.to(trigger, { y: -8, duration: 0.08, ease: 'power2.out',
+        onComplete: () => gsap.to(trigger, { y: 0, duration: 0.18, ease: 'elastic.out(1, 0.5)' })
+      });
+    } else {
+      trigger.style.transform = 'translateX(-50%) translateY(-8px)';
+      setTimeout(() => trigger.style.transform = 'translateX(-50%) translateY(0)', 150);
+    }
+    }
     S.counts[S.active]--;
     S.totalCount = Math.max((S.totalCount||0)-1, 0);
+    if (S.stats) {
+      S.stats.today = Math.max((S.stats.today||0)-1, 0);
+      S.stats.week = Math.max((S.stats.week||0)-1, 0);
+      S.stats.month = Math.max((S.stats.month||0)-1, 0);
+      S.stats.lifetime = Math.max((S.stats.lifetime||0)-1, 0);
+    }
     renderCounter();
   }
 });
@@ -1472,7 +1810,7 @@ function renderNames() {
   ALLAH_NAMES.forEach(n => {
     const el = document.createElement('div');
     el.className = 'name-card';
-    el.innerHTML = `<div class="name-arabic">${n.a}</div><div class="name-english">${n.e}</div>`;
+    el.innerHTML = `<div class="name-arabic">${n.a}</div><div class="name-translit">${n.t||n.e}</div><div class="name-english">${n.e}</div>`;
     grid.appendChild(el);
   });
 }
@@ -1648,19 +1986,40 @@ window.addEventListener('beforeinstallprompt', e => {
   if (!localStorage.getItem('banner_dismissed')) {
     document.getElementById('install-banner').classList.remove('hidden');
   }
+  const btn = document.getElementById('btn-settings-install');
+  if(btn) { 
+    btn.style.display = 'flex'; 
+    btn.innerHTML = '<svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Install App'; 
+  }
 });
-function triggerInstall() {
+async function triggerInstall(e) {
   if (deferredPrompt) {
+    const isSettingsBtn = e && e.currentTarget && e.currentTarget.id === 'btn-settings-install';
+    if(isSettingsBtn) {
+      e.currentTarget.innerHTML = '<svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Installing...';
+    }
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(r => {
-      if (r.outcome === 'accepted') {
-        document.getElementById('install-banner').classList.add('hidden');
-        localStorage.setItem('banner_dismissed','1');
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      document.getElementById('install-banner').classList.add('hidden');
+      localStorage.setItem('banner_dismissed','1');
+      if(isSettingsBtn) {
+        e.currentTarget.innerHTML = '<svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> Installed ✓';
+        e.currentTarget.disabled = true;
       }
-      deferredPrompt = null;
-    });
+    } else {
+      if(isSettingsBtn) {
+        e.currentTarget.innerHTML = '<svg viewBox="0 0 24 24" style="stroke:var(--primary-light);fill:none;stroke-width:2;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Install App';
+      }
+    }
+    deferredPrompt = null;
   } else {
-    alert('Open in Chrome/Edge on Android and tap "Add to Home Screen", or use Share on iOS Safari.');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      alert('To install on iOS: Tap the Share button below, then select "Add to Home Screen".');
+    } else {
+      alert('Open in Chrome/Edge on Android and tap "Add to Home Screen", or use Share on iOS Safari.');
+    }
   }
 }
 document.getElementById('btn-banner-install').addEventListener('click', triggerInstall);
@@ -1675,10 +2034,39 @@ if (window.matchMedia('(display-mode: standalone)').matches || localStorage.getI
 
 // Clean up legacy custom dhikr restore (removed to prevent crash)
 
+
+/* ═══════════════════════════════════════
+   COLOR PICKER
+═══════════════════════════════════════ */
+function applyTheme(themeName) {
+  document.body.classList.remove('theme-black', 'theme-green', 'theme-blue', 'theme-red', 'theme-gold', 'theme-white');
+  if (themeName) {
+    document.body.classList.add(themeName);
+  }
+  
+  // Update swatches
+  document.querySelectorAll('.color-swatch').forEach(sw => {
+    sw.classList.remove('active');
+    if (sw.dataset.theme === (themeName || 'theme-black')) {
+      sw.classList.add('active');
+    }
+  });
+}
+
+document.querySelectorAll('.color-swatch').forEach(sw => {
+  sw.addEventListener('click', (e) => {
+    const theme = e.target.dataset.theme;
+    applyTheme(theme);
+    S.themeColor = theme;
+    save();
+  });
+});
+
 /* ═══════════════════════════════════════
    INIT
 ═══════════════════════════════════════ */
-renderCounter();
+if (S.themeColor) applyTheme(S.themeColor);
+    renderCounter();
 renderDuas();
 renderHadiths();
 renderBattles();

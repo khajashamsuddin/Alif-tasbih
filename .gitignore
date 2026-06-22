@@ -25,3 +25,18 @@ desktop.ini
 
 # Logs
 *.log
+
+# Temporary & Backup Scripts
+index_backup.html
+patch.js
+verify.js
+cleanup.js
+debug.js
+redesign.js
+test_script.js
+temp_script.js
+color_patch.js
+
+# Dependencies
+node_modules/
+package-lock.json
