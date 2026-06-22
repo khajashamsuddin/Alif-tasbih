@@ -30,6 +30,7 @@ npm-debug.log*
 
 # ─── Temporary, Backup & Dev Scripts ──────────────────────────────────────────
 index_backup.html
+index_patch.js
 patch.js
 verify.js
 cleanup.js
@@ -40,6 +41,11 @@ temp_script.js
 color_patch.js
 reminders_patch.js
 apply_custom_prompts.js
+sw_backup.js
+
+# ─── AI Assistant Config ───────────────────────────────────────────────────────
+.agents/
+.gemini/
 
 # ─── Node / Dependencies ──────────────────────────────────────────────────────
 node_modules/

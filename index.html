@@ -607,6 +607,9 @@
     }
     .reminder-label { font-size: 12px; color: var(--text-muted); }
     .reminder-edit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       font-size: 13px;
       font-weight: 600;
       color: var(--primary-light);
@@ -615,7 +618,48 @@
       border-radius: 8px;
       transition: background .15s;
     }
+    .reminder-edit-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
     .reminder-edit-btn:hover { background: var(--card2); }
+    .reminder-delete-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 4px 7px;
+      border-radius: 8px;
+      color: var(--red, #c0392b);
+      transition: background .15s;
+      line-height: 1;
+    }
+    .reminder-delete-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+    .reminder-delete-btn:hover { background: rgba(192,57,43,.15); }
+    /* AM/PM time picker row */
+    .time-picker-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .time-picker-row select {
+      flex: 1;
+      padding: 9px 6px;
+      border-radius: 9px;
+      border: 1.5px solid var(--border);
+      background: var(--card2);
+      color: var(--text);
+      font-size: 16px;
+      font-family: monospace;
+      font-weight: 600;
+      text-align: center;
+      outline: none;
+      cursor: pointer;
+    }
+    .time-picker-row .ampm-select {
+      flex: 0 0 68px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
 
     /* Stats hero box */
     .reminder-stats-box {
@@ -1150,18 +1194,38 @@
     <div class="modal" style="width: 320px; max-width: 90%;">
       <h3 id="rem-modal-title">Custom Reminder</h3>
       <input type="hidden" id="rem-id">
-      <div>
+      <input type="hidden" id="rem-type">
+      <div id="rem-title-group">
         <div class="form-lbl">Reminder Title</div>
         <input class="inp" type="text" id="rem-title" placeholder="e.g. Asr Adhkar">
       </div>
-      <div>
+      <div id="rem-msg-group">
         <div class="form-lbl">Message / Dua</div>
         <input class="inp" type="text" id="rem-msg" placeholder="Message to display">
       </div>
       <div>
         <div class="form-lbl">Time</div>
-        <input class="inp" type="time" id="rem-time" style="font-family:monospace;">
+        <div class="time-picker-row">
+          <select id="rem-hour">
+            <option value="01">1</option><option value="02">2</option><option value="03">3</option>
+            <option value="04">4</option><option value="05">5</option><option value="06">6</option>
+            <option value="07">7</option><option value="08">8</option><option value="09">9</option>
+            <option value="10">10</option><option value="11">11</option><option value="12">12</option>
+          </select>
+          <span style="font-size:20px; font-weight:800; color:var(--text-muted);">:</span>
+          <select id="rem-min">
+            <option value="00">00</option><option value="05">05</option><option value="10">10</option>
+            <option value="15">15</option><option value="20">20</option><option value="25">25</option>
+            <option value="30">30</option><option value="35">35</option><option value="40">40</option>
+            <option value="45">45</option><option value="50">50</option><option value="55">55</option>
+          </select>
+          <select id="rem-ampm" class="ampm-select">
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
       </div>
+      <div id="rem-system-note" style="display:none; font-size:12px; color:var(--text-muted); background:var(--card2); border-radius:8px; padding:8px 10px; margin-top:2px;">You can change the time as per your need.</div>
       <div class="modal-row">
         <button class="btn" onclick="closeReminderModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveCustomReminder()">Save</button>
@@ -2239,6 +2303,38 @@ document.querySelectorAll('.color-swatch').forEach(sw => {
 /* ═══════════════════════════════════════
    REMINDER & NOTIFICATION SYSTEM
 ═══════════════════════════════════════ */
+
+/* ────────────────────────────────────────────────────────────
+   HELPER: Push current enabled reminders to SW for scheduling
+   Call this whenever reminders change (save / toggle / edit)
+──────────────────────────────────────────────────────────── */
+function syncRemindersToSW() {
+  if (!('serviceWorker' in navigator)) return;
+
+  navigator.serviceWorker.ready.then(reg => {
+    if (!reg.active) return;
+
+    // Build a clean list with resolved timeStr
+    const payload = REMINDER_SYS.reminders
+      .filter(r => r.enabled)
+      .map(r => ({
+        id:        r.id,
+        title:     r.title,
+        msg:       r.msg,
+        timeStr:   REMINDER_SYS.getTriggerTime(r), // 'HH:MM'
+        enabled:   r.enabled,
+        targetId:  r.targetId || null
+      }));
+
+    reg.active.postMessage({
+      type: 'SCHEDULE_REMINDERS',
+      reminders: payload
+    });
+
+    console.log('[App] Sent', payload.length, 'reminders to SW');
+  });
+}
+
 const REMINDER_SYS = {
   prayerTimes: null,
   reminders: [],
@@ -2250,6 +2346,13 @@ const REMINDER_SYS = {
     setInterval(() => this.checkClock(), 60000);
     setTimeout(() => this.checkClock(), 2000); // initial check
     this.render();
+
+    // Once SW is ready, sync reminders for background scheduling
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(() => {
+        syncRemindersToSW();
+      });
+    }
   },
   load() {
     try {
@@ -2271,6 +2374,7 @@ const REMINDER_SYS = {
     localStorage.setItem('tasbih_reminders', JSON.stringify(this.reminders));
     localStorage.setItem('tasbih_rem_triggered', JSON.stringify(this.lastTriggered));
     this.render();
+    syncRemindersToSW();   // sync enabled reminders to SW for background scheduling
   },
   getPrayerTimes() {
     if (!navigator.geolocation || !window.adhan) return;
@@ -2281,12 +2385,14 @@ const REMINDER_SYS = {
         const params = adhan.CalculationMethod.MuslimWorldLeague();
         this.prayerTimes = new adhan.PrayerTimes(coords, date, params);
         this.render(); // update times in UI
+        syncRemindersToSW();   // re-sync now that we have accurate prayer times
       },
       err => console.log('Geolocation skipped for prayers:', err)
     );
   },
   getTriggerTime(rem) {
     if (rem.type === 'custom') return rem.trigger; // HH:MM
+    if (rem.type === 'system_custom') return rem.trigger; // user ne manually set ki hui time
     if (this.prayerTimes) {
       const pTime = this.prayerTimes[rem.trigger];
       if (pTime) {
@@ -2390,19 +2496,25 @@ const REMINDER_SYS = {
         }
       }
 
+      const displayTime = t ? to12h(t) : '--';
       const card = document.createElement('div');
       card.className = 'reminder-card';
       card.innerHTML = `
         <div class="reminder-header">
           <div class="reminder-title">${rem.title}</div>
-          <div class="reminder-time">${t || '--:--'}</div>
+          <div class="reminder-time">${displayTime}</div>
         </div>
         <div class="reminder-desc">${rem.msg}</div>
         <div class="reminder-controls">
-          ${rem.type === 'custom'
-            ? `<span class="reminder-edit-btn" onclick="editReminder('${rem.id}')">✏ Edit</span>`
-            : `<span class="reminder-label">${rem.trigger === 'fajr' ? '🕌 Auto (Fajr)' : '🌙 Auto (Isha)'}</span>`
-          }
+          <div class="reminder-actions">
+            <span class="reminder-edit-btn" onclick="openReminderModal('${rem.id}')">
+              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              Edit
+            </span>
+            <span class="reminder-delete-btn" onclick="deleteReminder('${rem.id}')" title="Delete">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </span>
+          </div>
           <label class="toggle-switch">
             <input type="checkbox" onchange="toggleReminder('${rem.id}', this.checked)" ${rem.enabled ? 'checked' : ''}>
             <span class="toggle-slider"></span>
@@ -2414,10 +2526,10 @@ const REMINDER_SYS = {
 
     // Stats box
     if (nextRem) {
-      document.getElementById('next-reminder-time').textContent = nextRem.timeStr;
+      document.getElementById('next-reminder-time').textContent = to12h(nextRem.timeStr);
       document.getElementById('next-reminder-title').textContent = nextRem.title;
     } else {
-      document.getElementById('next-reminder-time').textContent = '--:--';
+      document.getElementById('next-reminder-time').textContent = '--';
       document.getElementById('next-reminder-title').textContent = 'No active reminders';
     }
   }
@@ -2475,22 +2587,96 @@ window.requestNotificationPermission = function() {
   });
 };
 
+/* ────────────────────────────────────────────────────────────
+   TIME FORMAT HELPERS  (all internal storage stays 24h HH:MM)
+──────────────────────────────────────────────────────────── */
+function to12h(time24) {
+  if (!time24 || !time24.includes(':')) return time24;
+  let [h, m] = time24.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${h}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function to24h(hour12, min, ampm) {
+  let h = parseInt(hour12, 10);
+  if (ampm === 'PM' && h !== 12) h += 12;
+  if (ampm === 'AM' && h === 12) h = 0;
+  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+}
+
+function setTimePicker(time24) {
+  // Populate rem-hour, rem-min, rem-ampm from a 24h string
+  let [h, m] = (time24 || '12:00').split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  const hStr = String(h).padStart(2, '0');
+  // Find closest minute option (round down to nearest 5)
+  const mRound = Math.floor(m / 5) * 5;
+  const mStr = String(mRound).padStart(2, '0');
+
+  const hourSel = document.getElementById('rem-hour');
+  const minSel  = document.getElementById('rem-min');
+  const ampmSel = document.getElementById('rem-ampm');
+
+  // Set hour
+  for (let opt of hourSel.options) { if (opt.value === hStr) { opt.selected = true; break; } }
+  // Set minute (closest 5-min)
+  let bestMin = '00';
+  for (let opt of minSel.options) { if (parseInt(opt.value) <= m) bestMin = opt.value; }
+  for (let opt of minSel.options) { opt.selected = opt.value === bestMin; }
+  // Set AM/PM
+  for (let opt of ampmSel.options) { opt.selected = opt.value === ampm; }
+}
+
+function getTimePicker24h() {
+  const h = document.getElementById('rem-hour').value;
+  const m = document.getElementById('rem-min').value;
+  const ampm = document.getElementById('rem-ampm').value;
+  return to24h(h, m, ampm);
+}
+
 window.openReminderModal = function(id = null) {
-  const m = document.getElementById('modal-reminder');
   openModal('modal-reminder');
+  const titleGroup = document.getElementById('rem-title-group');
+  const msgGroup = document.getElementById('rem-msg-group');
+  const sysNote = document.getElementById('rem-system-note');
+
   if (id) {
     const r = REMINDER_SYS.reminders.find(x => x.id === id);
-    document.getElementById('rem-title').value = r.title;
-    document.getElementById('rem-msg').value = r.msg;
-    document.getElementById('rem-time').value = r.trigger;
+    if (!r) return;
     document.getElementById('rem-id').value = r.id;
-    document.getElementById('rem-modal-title').textContent = 'Edit Reminder';
+    document.getElementById('rem-type').value = r.type;
+
+    if (r.type === 'system' || r.type === 'system_custom') {
+      // System reminder: only time is editable
+      document.getElementById('rem-modal-title').textContent = 'Edit Time';
+      const currentTime = REMINDER_SYS.getTriggerTime(r);
+      setTimePicker(currentTime || r.fallback || '05:00');
+      titleGroup.style.display = 'none';
+      msgGroup.style.display = 'none';
+      sysNote.style.display = 'block';
+    } else {
+      // Custom reminder: all fields editable
+      document.getElementById('rem-modal-title').textContent = 'Edit Reminder';
+      document.getElementById('rem-title').value = r.title;
+      document.getElementById('rem-msg').value = r.msg;
+      setTimePicker(r.trigger || '12:00');
+      titleGroup.style.display = 'block';
+      msgGroup.style.display = 'block';
+      sysNote.style.display = 'none';
+    }
   } else {
+    // New reminder
     document.getElementById('rem-title').value = '';
     document.getElementById('rem-msg').value = '';
-    document.getElementById('rem-time').value = '12:00';
+    setTimePicker('12:00');
     document.getElementById('rem-id').value = '';
+    document.getElementById('rem-type').value = 'custom';
     document.getElementById('rem-modal-title').textContent = 'New Reminder';
+    titleGroup.style.display = 'block';
+    msgGroup.style.display = 'block';
+    sysNote.style.display = 'none';
   }
 };
 
@@ -2499,29 +2685,60 @@ window.closeReminderModal = function() {
 };
 
 window.saveCustomReminder = function() {
-  const id = document.getElementById('rem-id').value;
-  const title = document.getElementById('rem-title').value.trim();
-  const msg = document.getElementById('rem-msg').value.trim();
-  const time = document.getElementById('rem-time').value;
-  
-  if (!title || !time) return;
-  
+  const id   = document.getElementById('rem-id').value;
+  const type = document.getElementById('rem-type').value;
+  const time = getTimePicker24h(); // always stored as 24h internally
+
+  if (!time) return;
+
   if (id) {
     const r = REMINDER_SYS.reminders.find(x => x.id === id);
-    if(r) { r.title = title; r.msg = msg; r.trigger = time; }
+    if (r) {
+      if (r.type === 'system' || r.type === 'system_custom') {
+        // System reminder: update time only
+        r.fallback = time;
+        r.trigger  = time;
+        r.type = 'system_custom'; // mark as manually set
+      } else {
+        // Custom reminder: update all fields
+        const title = document.getElementById('rem-title').value.trim();
+        const msg   = document.getElementById('rem-msg').value.trim();
+        if (!title) return;
+        r.title   = title;
+        r.msg     = msg;
+        r.trigger = time;
+      }
+    }
   } else {
+    const title = document.getElementById('rem-title').value.trim();
+    const msg   = document.getElementById('rem-msg').value.trim();
+    if (!title) return;
     REMINDER_SYS.reminders.push({
-      id: 'custom_' + Date.now(),
-      type: 'custom',
-      title: title,
-      msg: msg,
+      id:      'custom_' + Date.now(),
+      type:    'custom',
+      title:   title,
+      msg:     msg,
       trigger: time,
       enabled: true
     });
   }
   REMINDER_SYS.save();
   closeReminderModal();
-  if('Notification' in window && Notification.permission === 'default') requestNotificationPermission();
+  if ('Notification' in window && Notification.permission === 'default') requestNotificationPermission();
+};
+
+window.deleteReminder = function(id) {
+  const r = REMINDER_SYS.reminders.find(x => x.id === id);
+  if (!r) return;
+  appConfirm(
+    `Delete the reminder <b>&ldquo;${r.title}&rdquo;</b>?`,
+    confirmed => {
+      if (!confirmed) return;
+      REMINDER_SYS.reminders = REMINDER_SYS.reminders.filter(x => x.id !== id);
+      REMINDER_SYS.save();
+    },
+    'Delete Reminder'
+  );
 };
 
 // Add REMINDER_SYS.init() to the bottom INIT block
