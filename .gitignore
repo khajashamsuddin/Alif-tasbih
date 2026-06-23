@@ -42,6 +42,8 @@ color_patch.js
 reminders_patch.js
 apply_custom_prompts.js
 sw_backup.js
+send_reminders_backup.js
+firebase-messaging-sw.js
 
 # ─── AI Assistant Config ───────────────────────────────────────────────────────
 .agents/

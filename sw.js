@@ -1,24 +1,55 @@
 /* ═══════════════════════════════════════════════════════════
-   Alif Tasbih — Service Worker (Caching Only)
+   Alif Tasbih — Service Worker (Caching + FCM Background Push)
    Version: INCREMENT THIS ON EVERY DEPLOY to bust old caches
-   e.g. v6 → v7 → v8 ...
 ═══════════════════════════════════════════════════════════ */
-const SW_VERSION = 'alif-tasbih-v6'; // ← CHANGE THIS ON EVERY DEPLOY
 
-/* Assets cached on install */
+/* ── STEP 1: Firebase imports (FCM background support) ───── */
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey:            'AIzaSyAOR4xA3h_clZjX-XpeUEL4Mjj0leoG8hw',
+  authDomain:        'alif-tasbih.firebaseapp.com',
+  projectId:         'alif-tasbih',
+  storageBucket:     'alif-tasbih.firebasestorage.app',
+  messagingSenderId: '808279704019',
+  appId:             '1:808279704019:web:5677b5369561b61538af26'
+});
+
+const messagingInstance = firebase.messaging();
+
+/* Background message handler — fires when app is CLOSED or in background */
+messagingInstance.onBackgroundMessage((payload) => {
+  console.log('[SW] Background FCM message received:', payload);
+
+  const notif = payload.notification || {};
+  const data  = payload.data         || {};
+
+  const title = notif.title || data.title || 'Alif Tasbih';
+  const body  = notif.body  || data.body  || '';
+  const icon  = notif.icon  || data.icon  || './icon-192.PNG';
+
+  self.registration.showNotification(title, {
+    body,
+    icon,
+    badge:   './icon-192.PNG',
+    vibrate: [200, 100, 200],
+    tag:     data.tag || 'fcm-bg',
+    renotify: true,
+    data:    { ...data, clickAction: notif.click_action || data.click_action || './' }
+  });
+});
+
+/* ── STEP 2: Caching config ──────────────────────────────── */
+const SW_VERSION = 'alif-tasbih-v9'; // ← CHANGE THIS ON EVERY DEPLOY
+
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
+  './icon-192.PNG',
+  './icon-512.PNG',
   './assets/logo.png'
-];
-
-/* External CDN assets (cached on first fetch) */
-const CDN_ASSETS = [
-  'https://cdn.jsdelivr.net/npm/adhan@4.3.3/lib/adhan.min.js',
-  'https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js'
 ];
 
 /* ── INSTALL ─────────────────────────────────────────────── */
@@ -26,7 +57,6 @@ self.addEventListener('install', event => {
   console.log(`[SW ${SW_VERSION}] Installing…`);
   event.waitUntil(
     caches.open(SW_VERSION).then(cache => {
-      // Pre-cache local assets (failures are non-fatal individually)
       return Promise.allSettled(
         PRECACHE_ASSETS.map(url =>
           cache.add(url).catch(e => console.warn('[SW] Pre-cache miss:', url, e))
@@ -34,7 +64,6 @@ self.addEventListener('install', event => {
       );
     })
   );
-  // Take over immediately — don't wait for old SW to die
   self.skipWaiting();
 });
 
@@ -55,37 +84,33 @@ self.addEventListener('activate', event => {
   );
 });
 
-/* ── FETCH — Stale-While-Revalidate for HTML, Cache-First for rest ── */
+/* ── FETCH — Network First for HTML, Cache First for rest ── */
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
 
-  /* ── index.html → Network First (always get latest app) ── */
+  /* index.html → Network First */
   if (url.pathname.endsWith('index.html') || url.pathname === '/' || url.pathname.endsWith('/')) {
     event.respondWith(
       fetch(event.request)
         .then(networkRes => {
-          // Clone & cache the fresh version
           const clone = networkRes.clone();
           caches.open(SW_VERSION).then(c => c.put(event.request, clone));
           return networkRes;
         })
-        .catch(() => caches.match('./index.html')) // offline fallback
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
 
-  /* ── Everything else → Cache First, update in background ── */
+  /* Everything else → Cache First */
   event.respondWith(
     caches.match(event.request).then(cached => {
       const networkFetch = fetch(event.request)
         .then(networkRes => {
-          if (
-            networkRes &&
-            networkRes.status === 200 &&
-            (networkRes.type === 'basic' || networkRes.type === 'cors')
-          ) {
+          if (networkRes && networkRes.status === 200 &&
+              (networkRes.type === 'basic' || networkRes.type === 'cors')) {
             const clone = networkRes.clone();
             caches.open(SW_VERSION).then(c => c.put(event.request, clone));
           }
@@ -99,7 +124,6 @@ self.addEventListener('fetch', event => {
 });
 
 /* ── NOTIFICATION CLICK ──────────────────────────────────── */
-/* Handles clicks on foreground FCM pushes shown by this SW.  */
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const payload = event.notification.data || {};
@@ -108,18 +132,17 @@ self.addEventListener('notificationclick', event => {
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then(windowClients => {
-        // Focus any existing open window / tab
         for (const client of windowClients) {
           if ('focus' in client) {
             client.focus();
+            client.postMessage(payload);
             return;
           }
         }
-        // No open window — open a new one
         if (clients.openWindow) {
-          return clients.openWindow(payload.clickAction || './');
+          const deepLink = encodeURIComponent(JSON.stringify(payload));
+          return clients.openWindow(`./index.html?deepLink=${deepLink}`);
         }
       })
   );
 });
-

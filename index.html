@@ -2305,34 +2305,16 @@ document.querySelectorAll('.color-swatch').forEach(sw => {
 ═══════════════════════════════════════ */
 
 /* ────────────────────────────────────────────────────────────
-   HELPER: Push current enabled reminders to SW for scheduling
+   HELPER: Sync current enabled reminders for notification delivery
    Call this whenever reminders change (save / toggle / edit)
 ──────────────────────────────────────────────────────────── */
 function syncRemindersToSW() {
-  if (!('serviceWorker' in navigator)) return;
-
-  navigator.serviceWorker.ready.then(reg => {
-    if (!reg.active) return;
-
-    // Build a clean list with resolved timeStr
-    const payload = REMINDER_SYS.reminders
-      .filter(r => r.enabled)
-      .map(r => ({
-        id:        r.id,
-        title:     r.title,
-        msg:       r.msg,
-        timeStr:   REMINDER_SYS.getTriggerTime(r), // 'HH:MM'
-        enabled:   r.enabled,
-        targetId:  r.targetId || null
-      }));
-
-    reg.active.postMessage({
-      type: 'SCHEDULE_REMINDERS',
-      reminders: payload
-    });
-
-    console.log('[App] Sent', payload.length, 'reminders to SW');
-  });
+  // Service workers cannot reliably keep timer-based reminders alive.
+  // Foreground reminders are checked in-page; closed-app reminders use FCM.
+  if (typeof window.syncRemoteReminders === 'function') {
+    window.syncRemoteReminders();
+  }
+  return;
 }
 
 const REMINDER_SYS = {
@@ -2427,8 +2409,8 @@ const REMINDER_SYS = {
       navigator.serviceWorker.ready.then(reg => {
         reg.showNotification(rem.title, {
           body: rem.msg,
-          icon: './icon-192.png',
-          badge: './icon-192.png',
+          icon: './icon-192.PNG',
+          badge: './icon-192.PNG',
           vibrate: [200, 100, 200],
           data: { target: 'dua', id: rem.targetId || null }
         });
@@ -2796,6 +2778,7 @@ window.addEventListener('load', () => {
    INIT
 ═══════════════════════════════════════ */
 REMINDER_SYS.init();
+window.REMINDER_SYS = REMINDER_SYS;
     if (S.themeColor) applyTheme(S.themeColor);
     renderCounter();
 renderDuas();
@@ -2820,7 +2803,7 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 <!-- ═══════════════════════════════════════════════════════════════════
-     FIREBASE CLOUD MESSAGING & FIRESTORE SYNC
+     FIREBASE CLOUD MESSAGING
      Uses the Firebase 10 MODULAR SDK loaded from Google's CDN.
      Background push events are handled by firebase-messaging-sw.js.
      ═══════════════════════════════════════════════════════════════════ -->
@@ -2831,8 +2814,7 @@ import { getMessaging, getToken, onMessage }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 import { getFirestore, doc, setDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
-/* ── Firebase project config ─────────────────────────────── */
+ 
 const FIREBASE_CONFIG = {
   apiKey:            'AIzaSyAOR4xA3h_clZjX-XpeUEL4Mjj0leoG8hw',
   authDomain:        'alif-tasbih.firebaseapp.com',
@@ -2842,137 +2824,119 @@ const FIREBASE_CONFIG = {
   appId:             '1:808279704019:web:5677b5369561b61538af26',
   measurementId:     'G-T4Q904YRKN'
 };
-
+ 
 const VAPID_KEY = 'BO6lvqf6BjS-fCXo13Qzx2a3bebC5Dk7naIT1wDwa_DksQXQEHcM65PeRhMOY7PYKa2Dg1GKY0jOVj9b1C9c_iI';
-
-/* ── Calculate next 48 hours of trigger times for backend ── */
+ 
 function calculateNextTriggers(reminders) {
   const scheduled = [];
   const now = new Date();
-  
+ 
   reminders.filter(r => r.enabled).forEach(rem => {
-    // Determine target local time HH:MM
-    let timeStr = rem.trigger;
-    if (rem.type === 'system' && window.REMINDER_SYS && window.REMINDER_SYS.prayerTimes) {
-      const pTime = window.REMINDER_SYS.prayerTimes[rem.trigger];
-      if (pTime) {
-        timeStr = pTime.getHours().toString().padStart(2, '0') + ':' + pTime.getMinutes().toString().padStart(2, '0');
-      } else {
-        timeStr = rem.fallback;
-      }
-    }
-    
+    const timeStr = window.REMINDER_SYS?.getTriggerTime(rem) || rem.trigger || rem.fallback;
     if (!timeStr) return;
-    
+ 
     const [h, m] = timeStr.split(':').map(Number);
-    let fire = new Date(now);
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return;
+ 
+    const fire = new Date(now);
     fire.setHours(h, m, 0, 0);
-
-    // If already past today, schedule for tomorrow
     if (fire <= now) fire.setDate(fire.getDate() + 1);
-
+ 
     scheduled.push({
       id: rem.id,
       title: rem.title,
       body: rem.msg,
-      triggerTimeUTC: fire.toISOString(), // Standardized UTC for backend
+      triggerTimeUTC: fire.toISOString(),
       targetId: rem.targetId || null
     });
-    
-    // Also schedule for day after tomorrow to ensure buffer
-    let fireNextDay = new Date(fire);
-    fireNextDay.setDate(fireNextDay.getDate() + 1);
+ 
+    // Also schedule for the day after (so it repeats daily)
+    const nextFire = new Date(fire);
+    nextFire.setDate(nextFire.getDate() + 1);
     scheduled.push({
-      id: rem.id + '_next',
+      id: `${rem.id}_next`,
       title: rem.title,
       body: rem.msg,
-      triggerTimeUTC: fireNextDay.toISOString(),
+      triggerTimeUTC: nextFire.toISOString(),
       targetId: rem.targetId || null
     });
   });
-  
+ 
   return scheduled;
 }
-
+ 
+async function syncReminderSchedule(db, token) {
+  if (!token || !window.REMINDER_SYS?.reminders) return;
+ 
+  const scheduled = calculateNextTriggers(window.REMINDER_SYS.reminders);
+  await setDoc(doc(db, 'reminders', token), {
+    updatedAt: new Date().toISOString(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    scheduled
+  });
+  console.log('[FCM] Synced ' + scheduled.length + ' reminder triggers to Firestore.');
+}
+ 
 async function initFCM() {
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       console.warn('[FCM] Browser features missing.');
       return;
     }
-
-    const app = initializeApp(FIREBASE_CONFIG);
+ 
+    const app       = initializeApp(FIREBASE_CONFIG);
     const messaging = getMessaging(app);
-    const db = getFirestore(app);
-
-    // Wait for the main caching SW to be ready
-    const mainSwReg = await navigator.serviceWorker.ready;
-
-    // Register the dedicated FCM SW with an isolated scope to avoid caching conflicts
-    const fcmSwReg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: './fcm-push/' });
-    console.log('[FCM] Dedicated Messaging SW registered. Scope:', fcmSwReg.scope);
-
+    const db        = getFirestore(app);
+ 
+    // ─── KEY FIX: Sirf ek SW register karo (main sw.js) ─────────────
+    // Pehle firebase-messaging-sw.js alag register ho raha tha wrong scope pe
+    // Ab sw.js hi sab kuch handle karega
+    const mainSwReg = await navigator.serviceWorker.register('./sw.js');
+    await navigator.serviceWorker.ready;
+    // ─────────────────────────────────────────────────────────────────
+ 
     let permission = Notification.permission;
     if (permission === 'default') permission = await Notification.requestPermission();
     if (permission !== 'granted') return;
-
-    // Get token using the isolated FCM SW registration
+ 
+    // Token lo — ab main sw.js use hoga (pehle fcmSwReg tha jo galat tha)
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: fcmSwReg
+      serviceWorkerRegistration: mainSwReg  // ← YAHI FIX HAI
     });
-
+ 
     if (token) {
-      console.log('%c[FCM] Token obtained', 'color:#1FA96E;');
+      console.log('%c[FCM] Token obtained ✓', 'color:#1FA96E;');
       localStorage.setItem('fcm_token', token);
       window.fcmToken = token;
-      
-      // Sync reminders to Firestore
-      if (window.REMINDER_SYS && window.REMINDER_SYS.reminders) {
-        const scheduled = calculateNextTriggers(window.REMINDER_SYS.reminders);
-        await setDoc(doc(db, 'reminders', token), {
-          updatedAt: new Date().toISOString(),
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          scheduled: scheduled
-        });
-        console.log('[FCM] Synced ' + scheduled.length + ' reminder triggers to Firestore.');
-      }
+      window.syncRemoteReminders = () => syncReminderSchedule(db, token);
+      await window.syncRemoteReminders();
     }
-
-    // Foreground message handler (using the main SW to show the notification)
+ 
+    // Foreground message handler (jab app OPEN ho tab bhi notification dikhao)
     onMessage(messaging, payload => {
       const notif = payload.notification || {};
-      const data = payload.data || {};
+      const data  = payload.data         || {};
       mainSwReg.showNotification(notif.title || data.title || 'Alif Tasbih', {
-        body: notif.body || data.body || '',
-        icon: notif.icon || data.icon || './icon-192.png',
-        badge: './icon-192.png',
+        body:    notif.body  || data.body  || '',
+        icon:    notif.icon  || data.icon  || './icon-192.PNG',
+        badge:   './icon-192.PNG',
         vibrate: [200, 100, 200, 100, 200],
-        tag: 'fcm-foreground',
+        tag:     'fcm-foreground',
         renotify: true,
-        data: { ...data, _fcm: true, clickAction: notif.click_action || data.click_action || './' }
+        data:    { ...data, _fcm: true, clickAction: notif.click_action || data.click_action || './' }
       });
     });
-
+ 
   } catch (err) {
     console.error('[FCM] Initialization failed:', err);
   }
 }
-
-// Ensure initFCM runs after app loads
+ 
 if (document.readyState === 'complete') {
   initFCM();
 } else {
   window.addEventListener('load', initFCM);
-}
-
-// Hook into the reminder save function to re-sync when user changes settings
-const originalSave = window.REMINDER_SYS ? window.REMINDER_SYS.save.bind(window.REMINDER_SYS) : null;
-if (originalSave) {
-  window.REMINDER_SYS.save = function() {
-    originalSave(); // save to localStorage
-    initFCM();      // re-sync to Firestore
-  };
 }
 </script>
 </body>

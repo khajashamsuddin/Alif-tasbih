@@ -1,14 +1,11 @@
 /**
  * Alif Tasbih — Background Reminder Delivery Script
- * 
- * This script is designed to run periodically (e.g. via GitHub Actions).
- * It connects to Firestore, finds scheduled pushes where the trigger time
- * is in the past, sends them via Firebase Admin SDK, and removes them.
+ * Run via GitHub Actions every minute.
+ * Finds due reminders in Firestore and sends FCM push notifications.
  */
 
 const admin = require('firebase-admin');
 
-// Authenticate using the Service Account injected by GitHub Actions
 if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
   console.error("Missing FIREBASE_SERVICE_ACCOUNT environment variable.");
   process.exit(1);
@@ -20,73 +17,82 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
 
-const db = admin.firestore();
+const db        = admin.firestore();
 const messaging = admin.messaging();
 
 async function run() {
-  console.log('--- Starting Alif Tasbih Reminder Delivery ---');
+  console.log('--- Alif Tasbih: Reminder Delivery ---');
+
   const now = new Date();
   console.log(`Current Time (UTC): ${now.toISOString()}`);
 
+  // ─── KEY FIX: 5 minute window ────────────────────────────────────
+  // Pehle sirf exact time match hota tha, agar GitHub Actions 2 min
+  // late chali toh notification miss ho jaata tha.
+  // Ab 0 se 5 minute ke andar jo bhi due hai sab bhej do.
+  const WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+  // ─────────────────────────────────────────────────────────────────
+
   try {
     const snapshot = await db.collection('reminders').get();
-    
+
     if (snapshot.empty) {
       console.log('No registered users found.');
       return;
     }
 
-    let pushesToSend = [];
-    let docsToUpdate = new Map();
+    let pushesToSend  = [];
+    let docsToUpdate  = new Map();
 
-    snapshot.forEach(doc => {
-      const token = doc.id;
-      const data = doc.data();
+    snapshot.forEach(docSnap => {
+      const token     = docSnap.id;
+      const data      = docSnap.data();
       const scheduled = data.scheduled || [];
-      
+
+      // Find reminders that are due (within the 5-min window)
       const duePushes = scheduled.filter(push => {
-        return new Date(push.triggerTimeUTC) <= now;
+        const triggerTime = new Date(push.triggerTimeUTC);
+        const diff        = now - triggerTime; // milliseconds past trigger
+        return diff >= 0 && diff <= WINDOW_MS; // due lekin 5 min se zyada purana nahi
       });
 
+      // Keep the rest for future delivery
       const remainingPushes = scheduled.filter(push => {
-        return new Date(push.triggerTimeUTC) > now;
+        const triggerTime = new Date(push.triggerTimeUTC);
+        const diff        = now - triggerTime;
+        return !(diff >= 0 && diff <= WINDOW_MS);
       });
 
       if (duePushes.length > 0) {
         duePushes.forEach(push => {
           pushesToSend.push({
-            token: token,
+            token,
             notification: {
               title: push.title,
-              body: push.body
+              body:  push.body
             },
             data: {
-              click_action: '/Alif-tasbih/', // Adapt if deep linking needed
-              tag: push.id,
-              targetId: push.targetId || ''
+              click_action: '/Alif-tasbih/',
+              tag:          push.id,
+              targetId:     push.targetId || ''
             }
           });
         });
-        
-        // Stage the document for update (to remove sent pushes)
+
         docsToUpdate.set(token, remainingPushes);
       }
     });
 
-    console.log(`Found ${pushesToSend.length} pushes due right now.`);
+    console.log(`Sending ${pushesToSend.length} notifications...`);
 
     if (pushesToSend.length > 0) {
-      // Send all pushes concurrently using Promise.all
-      // Note: for >500 messages, use messaging.sendEachForMulticast chunking.
-      const sendPromises = pushesToSend.map(pushPayload => 
+      const sendPromises = pushesToSend.map(pushPayload =>
         messaging.send(pushPayload)
-          .then(res => console.log(`✅ Sent push to token ...${pushPayload.token.slice(-10)}: ${res}`))
+          .then(res  => console.log(`✅ Sent to ...${pushPayload.token.slice(-8)}: ${res}`))
           .catch(err => {
-            console.error(`❌ Failed to send to token ...${pushPayload.token.slice(-10)}`);
-            console.error(err);
-            // If the token is invalid/unregistered, we should ideally remove it from Firestore entirely.
+            console.error(`❌ Failed for ...${pushPayload.token.slice(-8)}: ${err.message}`);
+            // Invalid/unregistered token → delete from Firestore
             if (err.code === 'messaging/registration-token-not-registered') {
-              console.log(`Token is unregistered, will delete document.`);
               docsToUpdate.set(pushPayload.token, 'DELETE');
             }
           })
@@ -94,7 +100,7 @@ async function run() {
 
       await Promise.all(sendPromises);
 
-      // Clean up Firestore
+      // Update Firestore — remove sent pushes
       console.log('Updating Firestore...');
       const batch = db.batch();
       docsToUpdate.forEach((remaining, token) => {
@@ -105,13 +111,12 @@ async function run() {
           batch.update(docRef, { scheduled: remaining });
         }
       });
-      
       await batch.commit();
-      console.log('Firestore updated successfully.');
+      console.log('Done ✓');
     }
 
   } catch (error) {
-    console.error("Error executing reminder script:", error);
+    console.error("Error:", error);
     process.exit(1);
   }
 }

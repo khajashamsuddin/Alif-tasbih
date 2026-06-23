@@ -1,13 +1,10 @@
 /* ═══════════════════════════════════════════════════════════
    Alif Tasbih — Dedicated Firebase Messaging Service Worker
-   SCOPE: /fcm-push/ (Dummy scope to prevent caching conflicts)
 ═══════════════════════════════════════════════════════════ */
 
-// 1. Import Firebase Compat SDKs (Standard for non-module SWs)
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
-// 2. Initialize Firebase (must match the app config)
 firebase.initializeApp({
   apiKey: "AIzaSyAOR4xA3h_clZjX-XpeUEL4Mjj0leoG8hw",
   authDomain: "alif-tasbih.firebaseapp.com",
@@ -20,9 +17,6 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// 3. Handle Background Messages
-// When the app is closed, Firebase triggers this callback.
-// We then manually show the notification.
 messaging.onBackgroundMessage((payload) => {
   console.log('[FCM-SW] Received background message:', payload);
 
@@ -30,14 +24,14 @@ messaging.onBackgroundMessage((payload) => {
   const data        = payload.data         || {};
   const title       = notif.title        || data.title        || 'Alif Tasbih Reminder';
   const body        = notif.body         || data.body         || '';
-  const icon        = notif.icon         || data.icon         || './icon-192.png';
+  const icon        = notif.icon         || data.icon         || './icon-192.PNG';
   const clickAction = notif.click_action || data.click_action || './';
   const tag         = data.tag           || 'fcm-push';
 
   const options = {
     body,
     icon,
-    badge: './icon-192.png',
+    badge: './icon-192.PNG',
     vibrate: [200, 100, 200],
     tag,
     renotify: true,
@@ -50,7 +44,6 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(title, options);
 });
 
-// 4. Handle Notification Clicks
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const payload = event.notification.data || {};
@@ -59,14 +52,12 @@ self.addEventListener('notificationclick', (event) => {
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then(windowClients => {
-        // Focus existing tab if open
         for (const client of windowClients) {
           if ('focus' in client) {
             client.focus();
             return;
           }
         }
-        // No open window — open a new one
         if (clients.openWindow) {
           const targetUrl = payload.clickAction || '/Alif-tasbih/';
           return clients.openWindow(targetUrl);
