@@ -50,3 +50,4 @@ sw_backup.js
 # ─── Node / Dependencies ──────────────────────────────────────────────────────
 node_modules/
 package-lock.json
+.env

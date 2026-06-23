@@ -1,0 +1,40 @@
+name: Background Reminder Cron
+
+on:
+  schedule:
+    # Runs every 5 minutes
+    - cron: '*/5 * * * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  send_reminders:
+    runs-on: ubuntu-latest
+    
+    # Optional: Prevent concurrent runs of the same script
+    concurrency:
+      group: reminders-group
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          cd scripts
+          # Install firebase-admin locally for the script
+          npm install firebase-admin
+          
+      - name: Run Send Reminders Script
+        env:
+          # This secret must be set in your GitHub Repository settings
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          cd scripts
+          node send_reminders.js

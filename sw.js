@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   Alif Tasbih — Service Worker  +  FCM Background Push
+   Alif Tasbih — Service Worker (Caching Only)
    Version: INCREMENT THIS ON EVERY DEPLOY to bust old caches
-   e.g. v5 → v6 → v7 ...
+   e.g. v6 → v7 → v8 ...
 ═══════════════════════════════════════════════════════════ */
-const SW_VERSION = 'alif-tasbih-v5'; // ← CHANGE THIS ON EVERY DEPLOY
+const SW_VERSION = 'alif-tasbih-v6'; // ← CHANGE THIS ON EVERY DEPLOY
 
 /* Assets cached on install */
 const PRECACHE_ASSETS = [
@@ -98,103 +98,11 @@ self.addEventListener('fetch', event => {
   );
 });
 
-/* ══════════════════════════════════════════════════════════
-   BACKGROUND NOTIFICATION SCHEDULER
-   Works on Android Chrome when SW is kept alive.
-   Uses a self-rescheduling setTimeout loop inside the SW.
-══════════════════════════════════════════════════════════ */
-
-/* Called from index.html via postMessage when reminders change */
-self.addEventListener('message', event => {
-  const data = event.data;
-  if (!data) return;
-
-  if (data.type === 'SCHEDULE_REMINDERS') {
-    scheduleNextReminder(data.reminders || []);
-  }
-
-  if (data.type === 'CANCEL_REMINDERS') {
-    clearPendingTimers();
-  }
-});
-
-let pendingTimers = [];
-
-function clearPendingTimers() {
-  pendingTimers.forEach(t => clearTimeout(t));
-  pendingTimers = [];
-}
-
-/**
- * Given an array of reminder objects, schedule the next one
- * that should fire today (or tomorrow if all have passed).
- *
- * Reminder shape expected from index.html:
- * {
- *   id: string,
- *   title: string,
- *   msg: string,
- *   timeStr: 'HH:MM',   ← local time string
- *   enabled: boolean,
- *   targetId: string | null
- * }
- */
-function scheduleNextReminder(reminders) {
-  clearPendingTimers();
-
-  const enabled = reminders.filter(r => r.enabled && r.timeStr);
-  if (!enabled.length) return;
-
-  const now = new Date();
-
-  enabled.forEach(rem => {
-    const [h, m] = rem.timeStr.split(':').map(Number);
-    const fire = new Date(now);
-    fire.setHours(h, m, 0, 0);
-
-    // If already past today, schedule for tomorrow
-    if (fire <= now) fire.setDate(fire.getDate() + 1);
-
-    const delay = fire.getTime() - now.getTime();
-    console.log(`[SW] Scheduling "${rem.title}" in ${Math.round(delay / 60000)} min`);
-
-    const t = setTimeout(() => {
-      showReminderNotification(rem);
-      // Re-schedule same reminder for next day
-      scheduleNextReminder([rem]);
-    }, delay);
-
-    pendingTimers.push(t);
-  });
-}
-
-function showReminderNotification(rem) {
-  self.registration.showNotification(rem.title, {
-    body: rem.msg,
-    icon: './icon-192.png',
-    badge: './icon-192.png',
-    vibrate: [200, 100, 200, 100, 200],
-    tag: rem.id,              // prevents duplicate stacking
-    renotify: true,
-    data: {
-      target: 'dua',
-      id: rem.targetId || null,
-      reminderId: rem.id
-    }
-  });
-}
-
 /* ── NOTIFICATION CLICK ──────────────────────────────────── */
-/* Handles clicks on ALL notifications:                       */
-/*   • Reminder notifications  (from SW setTimeout scheduler) */
-/*   • FCM push notifications  (tagged with _fcm: true)       */
+/* Handles clicks on foreground FCM pushes shown by this SW.  */
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const payload = event.notification.data || {};
-
-  // FCM notifications set _fcm: true in their data field so we
-  // can distinguish them from local reminder notifications.
-  const isFCM = payload._fcm === true;
 
   event.waitUntil(
     clients
@@ -204,84 +112,14 @@ self.addEventListener('notificationclick', event => {
         for (const client of windowClients) {
           if ('focus' in client) {
             client.focus();
-            // Reminder notifications carry a deep-link payload;
-            // post it so the open tab can navigate to the right dua.
-            if (!isFCM) client.postMessage(payload);
             return;
           }
         }
         // No open window — open a new one
         if (clients.openWindow) {
-          if (isFCM) {
-            // Navigate to click_action URL if provided, else app root
-            return clients.openWindow(payload.clickAction || './');
-          }
-          // Reminder: encode payload as a deep-link query param
-          const deepLink = encodeURIComponent(JSON.stringify(payload));
-          return clients.openWindow(`./index.html?deepLink=${deepLink}`);
+          return clients.openWindow(payload.clickAction || './');
         }
       })
   );
 });
 
-/* ══════════════════════════════════════════════════════════
-   FCM BACKGROUND PUSH HANDLER
-   Receives Firebase Cloud Messaging push events when the app
-   is in the background or completely closed (browser + PWA).
-
-   DESIGN NOTE: We do NOT import the Firebase SDK here.
-   • Importing firebase-messaging-compat.js would add its own
-     conflicting notificationclick listener.
-   • FCM push events are standard W3C Web Push events — the
-     browser delivers them regardless of which SDK is present.
-   • The FCM token is obtained in index.html (modular SDK)
-     using serviceWorkerRegistration: swReg, so this SW is
-     already the registered push recipient.
-══════════════════════════════════════════════════════════ */
-self.addEventListener('push', event => {
-  console.log('[SW FCM] Push event received');
-
-  let payload = {};
-  try {
-    if (event.data) {
-      payload = event.data.json();
-      console.log('[SW FCM] Payload:', JSON.stringify(payload));
-    } else {
-      console.warn('[SW FCM] Push event has no data — using fallback defaults');
-    }
-  } catch (err) {
-    console.error('[SW FCM] Failed to parse push payload as JSON:', err);
-    try { console.log('[SW FCM] Raw text:', event.data?.text()); } catch (_) {}
-  }
-
-  /* FCM notification messages:  { notification: { title, body, icon }, data: {} }
-     FCM data-only messages:     { data: { title, body, ... } }                   */
-  const notif = payload.notification || {};
-  const data  = payload.data         || {};
-
-  const title       = notif.title        || data.title        || 'Alif Tasbih';
-  const body        = notif.body         || data.body         || '';
-  const icon        = notif.icon         || data.icon         || './icon-192.png';
-  const clickAction = notif.click_action || data.click_action || './';
-
-  const notifOptions = {
-    body,
-    icon,
-    badge:    './icon-192.png',
-    vibrate:  [200, 100, 200, 100, 200],
-    tag:      data.tag || 'fcm-push',   // collapse duplicate pushes
-    renotify: true,
-    data: {
-      ...data,
-      _fcm: true,        // flag for notificationclick handler above
-      clickAction        // URL to open on notification tap
-    }
-  };
-
-  event.waitUntil(
-    self.registration
-      .showNotification(title, notifOptions)
-      .then(() => console.log('[SW FCM] ✅ Background notification shown:', title))
-      .catch(err => console.error('[SW FCM] showNotification error:', err))
-  );
-});

@@ -2819,29 +2819,18 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
-
 <!-- ═══════════════════════════════════════════════════════════════════
-     FIREBASE CLOUD MESSAGING  —  Token retrieval & foreground handler
+     FIREBASE CLOUD MESSAGING & FIRESTORE SYNC
      Uses the Firebase 10 MODULAR SDK loaded from Google's CDN.
-     Background push events are handled by the push listener in sw.js.
-
-     WHY type="module"?
-       • Allows top-level await and ESM imports from CDN.
-       • Runs in strict mode with its own scope (no global pollution).
-       • Deferred by default — runs after HTML is parsed, safe for DOM.
-
-     WHY no firebase-messaging-sw.js?
-       • GitHub Pages serves from /Alif-tasbih/ (a subpath).
-       • A separate firebase-messaging-sw.js would register at scope /
-         and fail to intercept pushes for our subpath.
-       • We pass serviceWorkerRegistration: swReg to getToken() so
-         Firebase uses the already-registered sw.js instead.
+     Background push events are handled by firebase-messaging-sw.js.
      ═══════════════════════════════════════════════════════════════════ -->
 <script type="module">
 import { initializeApp }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getMessaging, getToken, onMessage }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
+import { getFirestore, doc, setDoc }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 /* ── Firebase project config ─────────────────────────────── */
 const FIREBASE_CONFIG = {
@@ -2854,170 +2843,136 @@ const FIREBASE_CONFIG = {
   measurementId:     'G-T4Q904YRKN'
 };
 
-/* ── VAPID key — Firebase Console → Project Settings →
-       Cloud Messaging → Web Push certificates → Key pair ─── */
-const VAPID_KEY =
-  'BO6lvqf6BjS-fCXo13Qzx2a3bebC5Dk7naIT1wDwa_DksQXQEHcM65PeRhMOY7PYKa2Dg1GKY0jOVj9b1C9c_iI';
+const VAPID_KEY = 'BO6lvqf6BjS-fCXo13Qzx2a3bebC5Dk7naIT1wDwa_DksQXQEHcM65PeRhMOY7PYKa2Dg1GKY0jOVj9b1C9c_iI';
 
-/* ══════════════════════════════════════════════════════════
-   MAIN INITIALIZER
-   Runs once after the page loads. Safe to call multiple times
-   — getToken() is idempotent and returns a cached token on
-   subsequent calls if the subscription hasn't changed.
-═══════════════════════════════════════════════════════════ */
+/* ── Calculate next 48 hours of trigger times for backend ── */
+function calculateNextTriggers(reminders) {
+  const scheduled = [];
+  const now = new Date();
+  
+  reminders.filter(r => r.enabled).forEach(rem => {
+    // Determine target local time HH:MM
+    let timeStr = rem.trigger;
+    if (rem.type === 'system' && window.REMINDER_SYS && window.REMINDER_SYS.prayerTimes) {
+      const pTime = window.REMINDER_SYS.prayerTimes[rem.trigger];
+      if (pTime) {
+        timeStr = pTime.getHours().toString().padStart(2, '0') + ':' + pTime.getMinutes().toString().padStart(2, '0');
+      } else {
+        timeStr = rem.fallback;
+      }
+    }
+    
+    if (!timeStr) return;
+    
+    const [h, m] = timeStr.split(':').map(Number);
+    let fire = new Date(now);
+    fire.setHours(h, m, 0, 0);
+
+    // If already past today, schedule for tomorrow
+    if (fire <= now) fire.setDate(fire.getDate() + 1);
+
+    scheduled.push({
+      id: rem.id,
+      title: rem.title,
+      body: rem.msg,
+      triggerTimeUTC: fire.toISOString(), // Standardized UTC for backend
+      targetId: rem.targetId || null
+    });
+    
+    // Also schedule for day after tomorrow to ensure buffer
+    let fireNextDay = new Date(fire);
+    fireNextDay.setDate(fireNextDay.getDate() + 1);
+    scheduled.push({
+      id: rem.id + '_next',
+      title: rem.title,
+      body: rem.msg,
+      triggerTimeUTC: fireNextDay.toISOString(),
+      targetId: rem.targetId || null
+    });
+  });
+  
+  return scheduled;
+}
+
 async function initFCM() {
   try {
-    /* ── 1. Browser feature checks ───────────────────────── */
-    if (!('serviceWorker' in navigator)) {
-      console.warn('[FCM] Service workers not supported. FCM unavailable.');
-      return;
-    }
-    if (!('PushManager' in window)) {
-      console.warn('[FCM] Web Push API not supported in this browser. FCM unavailable.');
-      return;
-    }
-    if (!('Notification' in window)) {
-      console.warn('[FCM] Notification API not available. FCM unavailable.');
+    if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
+      console.warn('[FCM] Browser features missing.');
       return;
     }
 
-    console.log('[FCM] Browser supports FCM. Initializing Firebase…');
-
-    /* ── 2. Initialize Firebase app ──────────────────────── */
-    const app       = initializeApp(FIREBASE_CONFIG);
+    const app = initializeApp(FIREBASE_CONFIG);
     const messaging = getMessaging(app);
-    console.log('[FCM] Firebase app initialized (project: alif-tasbih).');
+    const db = getFirestore(app);
 
-    /* ── 3. Wait for sw.js to be active & controlling page ─ */
-    /*       navigator.serviceWorker.ready resolves once the   */
-    /*       SW is both activated and calling clients.claim(). */
-    console.log('[FCM] Waiting for service worker to become active…');
-    const swReg = await navigator.serviceWorker.ready;
-    console.log('[FCM] Service worker is ready. Scope:', swReg.scope);
+    // Wait for the main caching SW to be ready
+    const mainSwReg = await navigator.serviceWorker.ready;
 
-    /* ── 4. Ensure notification permission is granted ───────
-            The existing load handler (lines ~2768-2792) may
-            already have requested permission. Calling
-            requestPermission() again is safe — the browser
-            returns the current state immediately if permission
-            has already been decided.                          */
+    // Register the dedicated FCM SW with an isolated scope to avoid caching conflicts
+    const fcmSwReg = await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: './fcm-push/' });
+    console.log('[FCM] Dedicated Messaging SW registered. Scope:', fcmSwReg.scope);
+
     let permission = Notification.permission;
-    console.log('[FCM] Notification permission state:', permission);
+    if (permission === 'default') permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
 
-    if (permission === 'default') {
-      console.log('[FCM] Requesting notification permission…');
-      permission = await Notification.requestPermission();
-      console.log('[FCM] Permission response:', permission);
-    }
-
-    if (permission !== 'granted') {
-      console.warn(
-        '[FCM] Notification permission is "' + permission + '". ' +
-        'FCM token cannot be generated until permission is granted.'
-      );
-      return;
-    }
-
-    /* ── 5. Get the FCM registration token ──────────────────
-            Passing serviceWorkerRegistration tells Firebase
-            to use our existing sw.js instead of trying to
-            register firebase-messaging-sw.js at the root.
-            This is critical for GitHub Pages subpath deployments. */
-    console.log('[FCM] Fetching FCM registration token…');
+    // Get token using the isolated FCM SW registration
     const token = await getToken(messaging, {
       vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: swReg   // ← key: reuse sw.js
+      serviceWorkerRegistration: fcmSwReg
     });
 
     if (token) {
-      /* ── Print token prominently for Firebase Console testing ── */
-      console.log(
-        '%c[FCM] ✅ Registration token obtained:',
-        'color:#1FA96E; font-weight:bold; font-size:13px;'
-      );
-      console.log(
-        '%c' + token,
-        'color:#C9A227; font-size:11px; word-break:break-all; user-select:all;'
-      );
-      console.log(
-        '[FCM] 💡 To test: Firebase Console → Cloud Messaging → Send test message → paste token above.'
-      );
-
-      /* Persist token for easy retrieval without reopening DevTools */
-      localStorage.setItem('fcm_token',    token);
-      localStorage.setItem('fcm_token_ts', new Date().toISOString());
-      window.fcmToken = token; // also available on window for console use
-
-      console.log('[FCM] Token stored in localStorage["fcm_token"] and window.fcmToken.');
-    } else {
-      console.warn(
-        '[FCM] getToken() returned null. Possible causes:\n' +
-        '  • VAPID key mismatch — verify in Firebase Console → Cloud Messaging\n' +
-        '  • Firebase project does not have Cloud Messaging enabled\n' +
-        '  • App is not served over HTTPS (required for Web Push)\n' +
-        '  • Ad blocker is blocking Firebase SDK requests'
-      );
+      console.log('%c[FCM] Token obtained', 'color:#1FA96E;');
+      localStorage.setItem('fcm_token', token);
+      window.fcmToken = token;
+      
+      // Sync reminders to Firestore
+      if (window.REMINDER_SYS && window.REMINDER_SYS.reminders) {
+        const scheduled = calculateNextTriggers(window.REMINDER_SYS.reminders);
+        await setDoc(doc(db, 'reminders', token), {
+          updatedAt: new Date().toISOString(),
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          scheduled: scheduled
+        });
+        console.log('[FCM] Synced ' + scheduled.length + ' reminder triggers to Firestore.');
+      }
     }
 
-    /* ── 6. Foreground message handler ──────────────────────
-            When the app tab is OPEN, FCM push events are NOT
-            automatically displayed as OS notifications.
-            We intercept them here via onMessage() and show
-            them through the SW — this produces a real OS-level
-            notification even while the user is in the tab.    */
+    // Foreground message handler (using the main SW to show the notification)
     onMessage(messaging, payload => {
-      console.log('[FCM] Foreground push received:', payload);
-
-      const notif       = payload.notification || {};
-      const data        = payload.data         || {};
-      const title       = notif.title        || data.title        || 'Alif Tasbih';
-      const body        = notif.body         || data.body         || '';
-      const icon        = notif.icon         || data.icon         || './icon-192.png';
-      const clickAction = notif.click_action || data.click_action || './';
-
-      swReg.showNotification(title, {
-        body,
-        icon,
-        badge:    './icon-192.png',
-        vibrate:  [200, 100, 200, 100, 200],
-        tag:      'fcm-foreground',  // collapses rapid repeat messages
+      const notif = payload.notification || {};
+      const data = payload.data || {};
+      mainSwReg.showNotification(notif.title || data.title || 'Alif Tasbih', {
+        body: notif.body || data.body || '',
+        icon: notif.icon || data.icon || './icon-192.png',
+        badge: './icon-192.png',
+        vibrate: [200, 100, 200, 100, 200],
+        tag: 'fcm-foreground',
         renotify: true,
-        data: { ...data, _fcm: true, clickAction }
-      })
-        .then(() => console.log('[FCM] Foreground notification shown:', title))
-        .catch(err => console.error('[FCM] showNotification error (foreground):', err));
+        data: { ...data, _fcm: true, clickAction: notif.click_action || data.click_action || './' }
+      });
     });
 
-    console.log('[FCM] ✅ FCM fully initialized. Listening for foreground messages.');
-
   } catch (err) {
-    /* ── Detailed error reporting ─────────────────────────── */
-    console.error('[FCM] Initialization failed:', err.code || err.name, err.message || err);
-
-    if (err.code === 'messaging/permission-blocked') {
-      console.warn('[FCM] Notifications are blocked. User must unblock in browser settings.');
-    } else if (err.code === 'messaging/unsupported-browser') {
-      console.warn('[FCM] Browser does not support FCM Web Push (e.g. Firefox without permission, Safari < 16.4).');
-    } else if (err.code === 'messaging/failed-service-worker-registration') {
-      console.warn('[FCM] SW registration issue. Ensure sw.js is reachable and HTTPS is active.');
-    } else if (err.message && err.message.toLowerCase().includes('vapid')) {
-      console.warn('[FCM] VAPID key error. Verify the key pair in Firebase Console → Cloud Messaging → Web push certificates.');
-    } else if (err.message && err.message.includes('net::')) {
-      console.warn('[FCM] Network error loading Firebase SDK. Check ad blockers or Content-Security-Policy.');
-    }
+    console.error('[FCM] Initialization failed:', err);
   }
 }
 
-/* ── Boot ────────────────────────────────────────────────────
-   Runs after the page is fully loaded. Both the SW registration
-   (at the bottom of the main script) and this FCM init listen
-   for the 'load' event. navigator.serviceWorker.ready inside
-   initFCM() ensures we wait for the SW to be active before
-   attempting to get a token, regardless of event order.       */
+// Ensure initFCM runs after app loads
 if (document.readyState === 'complete') {
   initFCM();
 } else {
   window.addEventListener('load', initFCM);
+}
+
+// Hook into the reminder save function to re-sync when user changes settings
+const originalSave = window.REMINDER_SYS ? window.REMINDER_SYS.save.bind(window.REMINDER_SYS) : null;
+if (originalSave) {
+  window.REMINDER_SYS.save = function() {
+    originalSave(); // save to localStorage
+    initFCM();      // re-sync to Firestore
+  };
 }
 </script>
 </body>
