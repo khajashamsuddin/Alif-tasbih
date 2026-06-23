@@ -32,7 +32,7 @@ jobs:
         run: |
           cd scripts
           # Install firebase-admin locally for the script
-          npm install firebase-admin
+          npm install firebase-admin@12
           
       - name: Run Send Reminders Script
         env:
