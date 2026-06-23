@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════
-   Alif Tasbih — Service Worker
+   Alif Tasbih — Service Worker  +  FCM Background Push
    Version: INCREMENT THIS ON EVERY DEPLOY to bust old caches
-   e.g. v2 → v3 → v4 ...
+   e.g. v5 → v6 → v7 ...
 ═══════════════════════════════════════════════════════════ */
-const SW_VERSION = 'alif-tasbih-v4'; // ← CHANGE THIS ON EVERY DEPLOY
+const SW_VERSION = 'alif-tasbih-v5'; // ← CHANGE THIS ON EVERY DEPLOY
 
 /* Assets cached on install */
 const PRECACHE_ASSETS = [
@@ -185,27 +185,103 @@ function showReminderNotification(rem) {
 }
 
 /* ── NOTIFICATION CLICK ──────────────────────────────────── */
+/* Handles clicks on ALL notifications:                       */
+/*   • Reminder notifications  (from SW setTimeout scheduler) */
+/*   • FCM push notifications  (tagged with _fcm: true)       */
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const payload = event.notification.data || {};
+
+  // FCM notifications set _fcm: true in their data field so we
+  // can distinguish them from local reminder notifications.
+  const isFCM = payload._fcm === true;
 
   event.waitUntil(
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then(windowClients => {
-        // Focus existing tab if open
+        // Focus any existing open window / tab
         for (const client of windowClients) {
           if ('focus' in client) {
             client.focus();
-            client.postMessage(payload);
+            // Reminder notifications carry a deep-link payload;
+            // post it so the open tab can navigate to the right dua.
+            if (!isFCM) client.postMessage(payload);
             return;
           }
         }
-        // Open new window
+        // No open window — open a new one
         if (clients.openWindow) {
+          if (isFCM) {
+            // Navigate to click_action URL if provided, else app root
+            return clients.openWindow(payload.clickAction || './');
+          }
+          // Reminder: encode payload as a deep-link query param
           const deepLink = encodeURIComponent(JSON.stringify(payload));
           return clients.openWindow(`./index.html?deepLink=${deepLink}`);
         }
       })
+  );
+});
+
+/* ══════════════════════════════════════════════════════════
+   FCM BACKGROUND PUSH HANDLER
+   Receives Firebase Cloud Messaging push events when the app
+   is in the background or completely closed (browser + PWA).
+
+   DESIGN NOTE: We do NOT import the Firebase SDK here.
+   • Importing firebase-messaging-compat.js would add its own
+     conflicting notificationclick listener.
+   • FCM push events are standard W3C Web Push events — the
+     browser delivers them regardless of which SDK is present.
+   • The FCM token is obtained in index.html (modular SDK)
+     using serviceWorkerRegistration: swReg, so this SW is
+     already the registered push recipient.
+══════════════════════════════════════════════════════════ */
+self.addEventListener('push', event => {
+  console.log('[SW FCM] Push event received');
+
+  let payload = {};
+  try {
+    if (event.data) {
+      payload = event.data.json();
+      console.log('[SW FCM] Payload:', JSON.stringify(payload));
+    } else {
+      console.warn('[SW FCM] Push event has no data — using fallback defaults');
+    }
+  } catch (err) {
+    console.error('[SW FCM] Failed to parse push payload as JSON:', err);
+    try { console.log('[SW FCM] Raw text:', event.data?.text()); } catch (_) {}
+  }
+
+  /* FCM notification messages:  { notification: { title, body, icon }, data: {} }
+     FCM data-only messages:     { data: { title, body, ... } }                   */
+  const notif = payload.notification || {};
+  const data  = payload.data         || {};
+
+  const title       = notif.title        || data.title        || 'Alif Tasbih';
+  const body        = notif.body         || data.body         || '';
+  const icon        = notif.icon         || data.icon         || './icon-192.png';
+  const clickAction = notif.click_action || data.click_action || './';
+
+  const notifOptions = {
+    body,
+    icon,
+    badge:    './icon-192.png',
+    vibrate:  [200, 100, 200, 100, 200],
+    tag:      data.tag || 'fcm-push',   // collapse duplicate pushes
+    renotify: true,
+    data: {
+      ...data,
+      _fcm: true,        // flag for notificationclick handler above
+      clickAction        // URL to open on notification tap
+    }
+  };
+
+  event.waitUntil(
+    self.registration
+      .showNotification(title, notifOptions)
+      .then(() => console.log('[SW FCM] ✅ Background notification shown:', title))
+      .catch(err => console.error('[SW FCM] showNotification error:', err))
   );
 });
