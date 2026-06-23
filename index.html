@@ -723,6 +723,23 @@
     }
     .fab-btn:active { transform: scale(0.9); box-shadow: 0 2px 8px rgba(23,133,89,0.3); }
 
+/* Minute input styling */
+.minute-input {
+  width: 70px;
+  padding: 9px 6px;
+  border-radius: 9px;
+  border: 1.5px solid var(--border);
+  background: var(--card2);
+  color: var(--text);
+  font-size: 16px;
+  font-family: monospace;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+}
+.minute-input:focus {
+  border-color: var(--primary-light);
+}
 </style>
 </head>
 <body>
@@ -1213,12 +1230,7 @@
             <option value="10">10</option><option value="11">11</option><option value="12">12</option>
           </select>
           <span style="font-size:20px; font-weight:800; color:var(--text-muted);">:</span>
-          <select id="rem-min">
-            <option value="00">00</option><option value="05">05</option><option value="10">10</option>
-            <option value="15">15</option><option value="20">20</option><option value="25">25</option>
-            <option value="30">30</option><option value="35">35</option><option value="40">40</option>
-            <option value="45">45</option><option value="50">50</option><option value="55">55</option>
-          </select>
+          <input class="minute-input" id="rem-min" type="number" min="0" max="59" value="00" placeholder="00">
           <select id="rem-ampm" class="ampm-select">
             <option value="AM">AM</option>
             <option value="PM">PM</option>
@@ -2604,18 +2616,19 @@ function setTimePicker(time24) {
   // Set hour
   for (let opt of hourSel.options) { if (opt.value === hStr) { opt.selected = true; break; } }
   // Set minute (closest 5-min)
-  let bestMin = '00';
-  for (let opt of minSel.options) { if (parseInt(opt.value) <= m) bestMin = opt.value; }
-  for (let opt of minSel.options) { opt.selected = opt.value === bestMin; }
+  minSel.value = String(m).padStart(2, '0');
+ minSel.value = String(m).padStart(2, '0'); 
   // Set AM/PM
   for (let opt of ampmSel.options) { opt.selected = opt.value === ampm; }
 }
 
 function getTimePicker24h() {
-  const h = document.getElementById('rem-hour').value;
-  const m = document.getElementById('rem-min').value;
+  const h    = document.getElementById('rem-hour').value;
+  let   m    = parseInt(document.getElementById('rem-min').value) || 0;
+  if (m < 0)  m = 0;
+  if (m > 59) m = 59;
   const ampm = document.getElementById('rem-ampm').value;
-  return to24h(h, m, ampm);
+  return to24h(h, String(m).padStart(2, '0'), ampm);
 }
 
 window.openReminderModal = function(id = null) {

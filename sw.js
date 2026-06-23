@@ -41,7 +41,7 @@ messagingInstance.onBackgroundMessage((payload) => {
 });
 
 /* ── STEP 2: Caching config ──────────────────────────────── */
-const SW_VERSION = 'alif-tasbih-v9'; // ← CHANGE THIS ON EVERY DEPLOY
+const SW_VERSION = 'alif-tasbih-v10'; // ← CHANGE THIS ON EVERY DEPLOY
 
 const PRECACHE_ASSETS = [
   './',
